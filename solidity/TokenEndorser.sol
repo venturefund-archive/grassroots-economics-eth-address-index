@@ -8,6 +8,7 @@ contract TokenEndorsement {
 	mapping ( bytes32 => bytes32 ) public endorsement;
 	mapping ( address => uint256 ) public tokenIndex;
 	mapping ( address => uint256[] ) public endorsers;
+	mapping ( string => address ) public tokenSymbolIndex;
 	address[] public tokens;
 
 	event EndorsementAdded(address indexed _token, address indexed _adder, uint256 indexed _index, bytes32 _data);
@@ -21,8 +22,12 @@ contract TokenEndorsement {
 		if (tokenIndex[_token] > 0) {
 			return false;
 		}
+		string memory token_symbol = _token.call(abi.encodeWithSignature('symbol()'));
+		require(tokenSymbolIndex[token_symbol] = address(0));
+
 		tokens.push(_token);
 		tokenIndex[_token] = count;
+		tokenSymbolIndex[token_symbol] = _token;
 		count++;
 		return true;
 	}
