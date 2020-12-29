@@ -27,11 +27,13 @@ class Test(unittest.TestCase):
             })
 
         # create store of used accounts
-        f = open(os.path.join(testdir, '../eth_token_endorser/data/TokenEndorser.bin'), 'r')
+        #f = open(os.path.join(testdir, '../eth_token_index/data/TokenUniqueSymbolIndex.bin'), 'r')
+        f = open(os.path.join(testdir, '../../solidity/TokenUniqueSymbolIndex.bin'), 'r')
         bytecode = f.read()
         f.close()
 
-        f = open(os.path.join(testdir, '../eth_token_endorser/data/TokenEndorser.json'), 'r')
+        #f = open(os.path.join(testdir, '../eth_token_index/data/TokenUniqueSymbolIndex.json'), 'r')
+        f = open(os.path.join(testdir, '../../solidity/TokenUniqueSymbolIndex.json'), 'r')
         self.abi = json.load(f)
         f.close()
 
@@ -71,6 +73,13 @@ class Test(unittest.TestCase):
 
         self.address_token_two = r.contractAddress
 
+        t = self.w3.eth.contract(abi=self.abi_token, bytecode=bytecode)
+        tx_hash = t.constructor('Bar Token Duplicate', 'BAR', 18).transact({'from': self.w3.eth.accounts[0]})
+
+        r = self.w3.eth.getTransactionReceipt(tx_hash)
+
+        self.address_token_three = r.contractAddress
+
 
     def tearDown(self):
         pass
@@ -79,55 +88,36 @@ class Test(unittest.TestCase):
     def test_basic(self):
         c = self.w3.eth.contract(abi=self.abi, address=self.address)
 
-        d = '0x' + os.urandom(32).hex()
-        c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[0]})
-
-        with self.assertRaises(Exception):
-            c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[0]})
-
-        c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[1]})
-        c.functions.add(self.address_token_two, d).transact({'from': self.w3.eth.accounts[0]})
-        c.functions.add(self.address_token_two, d).transact({'from': self.w3.eth.accounts[1]})
-
-
-    def test_endorsement(self):
-        c = self.w3.eth.contract(abi=self.abi, address=self.address)
-
-        d = '0x' + os.urandom(32).hex()
-        c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[0]})
-        c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[1]})
-
-
         h = hashlib.new('sha256')
-        h.update(bytes.fromhex(self.address_token_one[2:]))
-        h.update(bytes.fromhex(self.w3.eth.accounts[0][2:]))
+        h.update('FOO'.encode('utf-8'))
         z = h.digest()
 
-        assert d[2:] == c.functions.endorsement(z.hex()).call().hex()
+        # owner text
+        with self.assertRaises(Exception):
+            c.functions.register(z.hex(), self.address_token_one).transact({'from': self.w3.eth.accounts[1]})
 
-        c.functions.add(self.address_token_two, d).transact({'from': self.w3.eth.accounts[0]})
+        logg.debug('using identifier {}'.format(z.hex()))
+        # Register FOO symbol
+        c.functions.register(z.hex(), self.address_token_one).transact({'from': self.w3.eth.accounts[0]})
 
-        assert c.functions.endorsers(self.w3.eth.accounts[0], 0).call() == 1
-        assert c.functions.endorsers(self.w3.eth.accounts[1], 0).call() == 1
-        assert c.functions.endorsers(self.w3.eth.accounts[0], 1).call() == 2
+        # Raise on duplicate FOO symbol
+        with self.assertRaises(Exception):
+            c.functions.register(z.hex(), self.address_token_one).transact({'from': self.w3.eth.accounts[0]})
 
-        assert c.functions.tokens(1).call() == self.address_token_one
-        assert c.functions.tokens(2).call() == self.address_token_two
+        # Raise on mismatch between supplied symbol and token symbol reported by ERC20
+        with self.assertRaises(Exception):
+            c.functions.register(z.hex(), self.address_token_two).transact({'from': self.w3.eth.accounts[0]})
 
-        assert c.functions.tokenIndex(self.address_token_one).call() == 1
-        assert c.functions.tokenIndex(self.address_token_two).call() == 2
+        h = hashlib.new('sha256')
+        h.update('BAR'.encode('utf-8'))
+        z = h.digest()
 
+        # Register BAR symbol
+        c.functions.register(z.hex(), self.address_token_two).transact({'from': self.w3.eth.accounts[0]})
 
-
-    def test_symbol_index(self):
-        c = self.w3.eth.contract(abi=self.abi, address=self.address)
-        d = '0x' + os.urandom(32).hex()
-        c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[0]})
-        c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[1]})
-        c.functions.add(self.address_token_two, d).transact({'from': self.w3.eth.accounts[1]})
-
-        self.assertEqual(c.functions.tokenSymbolIndex('FOO').call(), self.address_token_one);
-        self.assertEqual(c.functions.tokenSymbolIndex('BAR').call(), self.address_token_two);
+        # Raise on duplicate BAR symbol (with different token contract address)
+        with self.assertRaises(Exception):
+            c.functions.register(z.hex(), self.address_token_three).transact({'from': self.w3.eth.accounts[0]})
 
 
 if __name__ == '__main__':

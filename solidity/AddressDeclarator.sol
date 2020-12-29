@@ -7,8 +7,10 @@ contract AddressDeclarator {
 	// EIP 173
 	address public owner;
 
-	mapping( bytes32 => uint256 ) declarations;
-	mapping( address => address[] ) public declarator;
+	mapping( address => address[] ) declarationIndex;
+	mapping( bytes32 => uint256 ) declarationContentIndex;
+	mapping( address => address[] ) declarator;
+	mapping( address => address[] ) declaratorReverse;
 	bytes32[][] public contents;
 
 	constructor(bytes32 _initialDescription) {
@@ -50,28 +52,41 @@ contract AddressDeclarator {
 		return declarator[_subject].length;
 	}
 
+	function declaratorAddressAt(address _subject, uint256 _idx) public view returns ( address ) {
+		return declarator[_subject][_idx];
+	}
+
 	function addDeclaration(address _subject, bytes32 _proof) public returns ( bool ) {
 		bytes32 k;
 		bytes32[] memory declarationContents;
-		uint256 declarationsIndex;
+		uint256 idx;
 		k = toReference(msg.sender, _subject);
-		declarationsIndex = declarations[k];
-		if (declarationsIndex == 0) { // This also works for the constructor :)
+		idx = declarationContentIndex[k];
+		if (idx == 0) { // This also works for the constructor :)
 			declarator[_subject].push(msg.sender);
-			contents.push(declarationContents); //= contents[declarationsIndex],
+			contents.push(declarationContents); //= contents[idx],
+			declarationIndex[msg.sender].push(_subject);
 		}
-		declarationsIndex = contents.length-1;
-		declarations[k] = declarationsIndex;
-		contents[declarationsIndex].push(_proof);
+		idx = contents.length-1;
+		declarationContentIndex[k] = idx;
+		contents[idx].push(_proof);
 
 		return true;
 	}
 
 	function declaration(address _declarator, address _subject) public view returns ( bytes32[] memory ) {
 		bytes32 k;
-		uint256 i;
+		uint256 idx;
 		k = toReference(_declarator, _subject);
-		i = declarations[k];
-		return contents[i];
+		idx = declarationContentIndex[k];
+		return contents[idx];
+	}
+
+	function declarationCount(address _declarator) public view returns ( uint256 ) {
+		return declarationIndex[_declarator].length;
+	}
+
+	function declarationAddressAt(address _declarator, uint256 _idx) public view returns ( address ) {
+		return declarationIndex[_declarator][_idx];
 	}
 }

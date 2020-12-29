@@ -2,12 +2,11 @@ import os
 import unittest
 import json
 import logging
+import hashlib
 
 import web3
 import eth_tester
 import eth_abi
-
-from eth_token_endorser import TokenEndorser
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
@@ -73,32 +72,62 @@ class Test(unittest.TestCase):
         self.address_token_two = r.contractAddress
 
 
-        c = self.w3.eth.contract(abi=self.abi, address=self.address)
-        d = '0x' + os.urandom(32).hex()
-        c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[0]})
-        c.functions.add(self.address_token_two, d).transact({'from': self.w3.eth.accounts[0]})
-
-
     def tearDown(self):
         pass
 
 
-    def test_interface(self):
-        i = TokenEndorser(self.w3, self.address) #, self.w3.eth.accounts[1])
-        self.assertEqual(i.token_from_symbol('FOO'), self.address_token_one)
+    def test_basic(self):
+        c = self.w3.eth.contract(abi=self.abi, address=self.address)
 
-
-    def test_endorsed_tokens(self):
-        i = TokenEndorser(self.w3, self.address) #, self.w3.eth.accounts[1])
-        t = i.endorsed_tokens(self.w3.eth.accounts[0])
-        self.assertEqual(t[0], self.address_token_one)
-        self.assertEqual(t[1], self.address_token_two)
-
-
-    def test_add(self):
-        i = TokenEndorser(self.w3, self.address, self.w3.eth.accounts[1])
         d = '0x' + os.urandom(32).hex()
-        i.add(self.address_token_one, d)
+        c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[0]})
+
+        with self.assertRaises(Exception):
+            c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[0]})
+
+        c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[1]})
+        c.functions.add(self.address_token_two, d).transact({'from': self.w3.eth.accounts[0]})
+        c.functions.add(self.address_token_two, d).transact({'from': self.w3.eth.accounts[1]})
+
+
+    def test_endorsement(self):
+        c = self.w3.eth.contract(abi=self.abi, address=self.address)
+
+        d = '0x' + os.urandom(32).hex()
+        c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[0]})
+        c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[1]})
+
+
+        h = hashlib.new('sha256')
+        h.update(bytes.fromhex(self.address_token_one[2:]))
+        h.update(bytes.fromhex(self.w3.eth.accounts[0][2:]))
+        z = h.digest()
+
+        assert d[2:] == c.functions.endorsement(z.hex()).call().hex()
+
+        c.functions.add(self.address_token_two, d).transact({'from': self.w3.eth.accounts[0]})
+
+        assert c.functions.endorsers(self.w3.eth.accounts[0], 0).call() == 1
+        assert c.functions.endorsers(self.w3.eth.accounts[1], 0).call() == 1
+        assert c.functions.endorsers(self.w3.eth.accounts[0], 1).call() == 2
+
+        assert c.functions.tokens(1).call() == self.address_token_one
+        assert c.functions.tokens(2).call() == self.address_token_two
+
+        assert c.functions.tokenIndex(self.address_token_one).call() == 1
+        assert c.functions.tokenIndex(self.address_token_two).call() == 2
+
+
+
+    def test_symbol_index(self):
+        c = self.w3.eth.contract(abi=self.abi, address=self.address)
+        d = '0x' + os.urandom(32).hex()
+        c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[0]})
+        c.functions.add(self.address_token_one, d).transact({'from': self.w3.eth.accounts[1]})
+        c.functions.add(self.address_token_two, d).transact({'from': self.w3.eth.accounts[1]})
+
+        self.assertEqual(c.functions.tokenSymbolIndex('FOO').call(), self.address_token_one);
+        self.assertEqual(c.functions.tokenSymbolIndex('BAR').call(), self.address_token_two);
 
 
 if __name__ == '__main__':
