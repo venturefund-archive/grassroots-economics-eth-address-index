@@ -15,6 +15,17 @@ contract TokenUniqueSymbolIndex {
 		tokens.push(address(0));
 	}
 
+	// EIP 165
+	function supportsInterface(bytes4 _interfaceCode) public pure returns ( bool ) {
+		if (_interfaceCode == bytes4(0x325d15e2)) {
+			return true;
+		}
+		if (_interfaceCode == bytes4(0x01ffc9a7)) {
+			return true;
+		}
+		return false;
+	}
+
 	// EIP 172
 	function transferOwnership() public {
 		revert("owner cannot be changed");

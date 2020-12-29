@@ -52,3 +52,7 @@ except:
 
 if not fail:
     raise RuntimeError('expected fail on register same token to same address')
+
+assert(c.functions.supportsInterface('0x325d15e2').call())
+assert(c.functions.supportsInterface('0x01ffc9a7').call())
+assert(not c.functions.supportsInterface('0xffffffff').call())
