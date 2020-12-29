@@ -39,7 +39,7 @@ declarations = [
         ]
 
 # Deployment is a self-signed declaration
-tx_hash = c.constructor(declarations[0]).transact({'from': w3.eth.accounts[0]})
+tx_hash = c.constructor(declarations[0][0]).transact({'from': w3.eth.accounts[0]})
 r = w3.eth.getTransactionReceipt(tx_hash)
 logg.debug('contract {}'.format(r.contractAddress))
 
@@ -53,7 +53,6 @@ assert r == w3.eth.accounts[0]
 
 r = c.functions.declaration(w3.eth.accounts[0], w3.eth.accounts[0]).call()
 assert r[0].hex() == declarations[0][0][2:]
-assert r[1].hex() == declarations[0][1][2:]
 
 
 # Add first declaration for 0 by 2

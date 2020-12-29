@@ -4,48 +4,74 @@ pragma solidity >=0.6.12;
 
 contract AddressDeclarator {
 
-	mapping( bytes32 => uint256[] ) 
-	//mapping( address => uint256[] ) declaratorItemsIndex;
-	//mapping( address => uint256 ) public declaratorCount;
-	//mapping( address => mapping ( address => declaratorItem ) ) declarationByDeclaratorIndex;
-	bytes32[][] contents;
+	// EIP 173
+	address public owner;
 
-//	constructor(bytes32[] memory _descriptions) {
-//		for (uint i; i < _descriptions.length; i++) {
-//			addDeclaration(msg.sender, _descriptions[i]);
-//		}
-//	}
-//
-//	function addDeclaration(address _subject, bytes32 _proof) public returns ( bool ) {
-//		declaratorItem storage item;
-//
-//		item = declarationByDeclaratorIndex[msg.sender][_subject];
-//		if (item.signer == address(0)) {
-//			item.signer = msg.sender;
-//			declaratorItemsIndex[_subject].push(declaratorItems.length);
-//			declaratorItems.push(item);
-//			declaratorCount[_subject]++;
-//		}
-//		item.content.push(_proof);
-//
-//		return true;
-//	}
-//
-//	function declarator(address _target, uint256 _idx) public view returns ( address ) {
-//		uint256 idx;
-//		declaratorItem storage item;
-//		
-//		idx = declaratorItemsIndex[_target][_idx];
-//		item = declaratorItems[idx];
-//
-//		return item.signer;
-//	}
-//
-//	function declaration(address _declarator, address _target) public view returns ( bytes32[] memory ) {
-//		declaratorItem storage item;
-//		
-//		item = declarationByDeclaratorIndex[_declarator][_target];
-//
-//		return item.content;
-//	}
+	mapping( bytes32 => uint256 ) declarations;
+	mapping( address => address[] ) public declarator;
+	bytes32[][] public contents;
+
+	constructor(bytes32 _initialDescription) {
+		bytes32[] memory foundation;
+
+		owner = msg.sender;
+		contents.push(foundation);
+		contents[contents.length-1].push(blockhash(block.number));
+
+		addDeclaration(msg.sender, _initialDescription);
+	}
+
+	// EIP 172
+	function transferOwnership() public {
+		revert("owner cannot be changed");
+	}
+
+	// EIP-165
+	function supportsInterface(bytes4 interfaceID) public view returns ( bool ) {
+		return false;
+	}
+	
+	function toReference(address _declarator, address _subject) private pure returns ( bytes32 ) {
+		bytes32 k;
+		bytes memory signMaterial = new bytes(40);
+		bytes memory addrBytes = abi.encodePacked(_declarator);
+		for (uint256 i = 0; i < 20; i++) {
+			signMaterial[i] = addrBytes[i];
+		}
+		addrBytes = abi.encodePacked(_subject);
+		for (uint256 i = 0; i < 20; i++) {
+			signMaterial[i+20] = addrBytes[i];
+		}
+		k = sha256(signMaterial);
+		return k;
+	}
+
+	function declaratorCount(address _subject) public view returns ( uint256 ) {
+		return declarator[_subject].length;
+	}
+
+	function addDeclaration(address _subject, bytes32 _proof) public returns ( bool ) {
+		bytes32 k;
+		bytes32[] memory declarationContents;
+		uint256 declarationsIndex;
+		k = toReference(msg.sender, _subject);
+		declarationsIndex = declarations[k];
+		if (declarationsIndex == 0) { // This also works for the constructor :)
+			declarator[_subject].push(msg.sender);
+			contents.push(declarationContents); //= contents[declarationsIndex],
+		}
+		declarationsIndex = contents.length-1;
+		declarations[k] = declarationsIndex;
+		contents[declarationsIndex].push(_proof);
+
+		return true;
+	}
+
+	function declaration(address _declarator, address _subject) public view returns ( bytes32[] memory ) {
+		bytes32 k;
+		uint256 i;
+		k = toReference(_declarator, _subject);
+		i = declarations[k];
+		return contents[i];
+	}
 }
