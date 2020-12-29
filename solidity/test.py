@@ -19,60 +19,80 @@ provider = web3.Web3.EthereumTesterProvider(instance)
 w3 = web3.Web3(provider)
 
 
-f = open('TokenEndorser.bin', 'r')
+f = open('AddressDeclarator.bin', 'r')
 bytecode = f.read()
 f.close()
 
-f = open('TokenEndorser.json', 'r')
+f = open('AddressDeclarator.json', 'r')
 abi = json.load(f)
 f.close()
 
-token_address = web3.Web3.toChecksumAddress('0x' + os.urandom(20).hex())
+#token_address = web3.Web3.toChecksumAddress('0x' + os.urandom(20).hex())
 
 c = w3.eth.contract(abi=abi, bytecode=bytecode)
-tx_hash = c.constructor().transact({'from': w3.eth.accounts[0]})
+#tx_hash = c.constructor().transact({'from': w3.eth.accounts[0]})
+
+declarations = [
+    ['0x' + os.urandom(32).hex(), '0x' + os.urandom(32).hex()],
+    ['0x' + os.urandom(32).hex(), '0x' + os.urandom(32).hex()],
+    ['0x' + os.urandom(32).hex(), '0x' + os.urandom(32).hex()],
+        ]
+
+# Deployment is a self-signed declaration
+tx_hash = c.constructor(declarations[0]).transact({'from': w3.eth.accounts[0]})
 r = w3.eth.getTransactionReceipt(tx_hash)
-logg.debug('contract {} initial token {}'.format(r.contractAddress, token_address))
+logg.debug('contract {}'.format(r.contractAddress))
 
 c = w3.eth.contract(abi=abi, address=r.contractAddress)
-d = '0x' + os.urandom(32).hex()
 
-# Initial token will fail in any case
-c.functions.add(token_address, d).transact({'from':w3.eth.accounts[0]})
+r = c.functions.declaratorCount(w3.eth.accounts[0]).call()
+assert r == 1
 
-fail = False
-try:
-    c.functions.add(token_address, d).transact({'from':w3.eth.accounts[0]})
-except:
-    fail = True
-    pass
+r = c.functions.declarator(w3.eth.accounts[0], 0).call()
+assert r == w3.eth.accounts[0]
 
-if not fail:
-    raise RuntimeError('expected fail on register same token to same address')
+r = c.functions.declaration(w3.eth.accounts[0], w3.eth.accounts[0]).call()
+assert r[0].hex() == declarations[0][0][2:]
+assert r[1].hex() == declarations[0][1][2:]
 
 
-c.functions.add(token_address, d).transact({'from':w3.eth.accounts[1]})
+# Add first declaration for 0 by 2
+c.functions.addDeclaration(w3.eth.accounts[0], declarations[1][0]).transact({'from': w3.eth.accounts[2]})
+
+r = c.functions.declaratorCount(w3.eth.accounts[0]).call()
+assert r == 2
+
+r = c.functions.declarator(w3.eth.accounts[0], 1).call()
+assert r == w3.eth.accounts[2]
+
+r = c.functions.declaration(w3.eth.accounts[2], w3.eth.accounts[0]).call()
+assert r[0].hex() == declarations[1][0][2:]
 
 
-h = hashlib.new('sha256')
-h.update(bytes.fromhex(token_address[2:]))
-h.update(bytes.fromhex(w3.eth.accounts[0][2:]))
-z = h.digest()
+# Add second declaration for 0 by 2
+c.functions.addDeclaration(w3.eth.accounts[0], declarations[1][1]).transact({'from': w3.eth.accounts[2]})
 
-assert d[2:] == c.functions.endorsement(z.hex()).call().hex()
+r = c.functions.declaratorCount(w3.eth.accounts[0]).call()
+assert r == 2
 
 
-another_token_address = web3.Web3.toChecksumAddress('0x' + os.urandom(20).hex())
-c.functions.add(another_token_address, d).transact({'from':w3.eth.accounts[0]})
+r = c.functions.declaration(w3.eth.accounts[2], w3.eth.accounts[0]).call()
+assert r[0].hex() == declarations[1][0][2:]
+assert r[1].hex() == declarations[1][1][2:]
 
-assert c.functions.endorsers(w3.eth.accounts[0], 0).call() == 1
-assert c.functions.endorsers(w3.eth.accounts[1], 0).call() == 1
-assert c.functions.endorsers(w3.eth.accounts[0], 1).call() == 2
 
-assert c.functions.tokens(1).call() == token_address
-assert c.functions.tokens(2).call() == another_token_address
+# Add first declaration for 1 by 2
+c.functions.addDeclaration(w3.eth.accounts[1], declarations[2][0]).transact({'from': w3.eth.accounts[2]})
 
-assert c.functions.tokenIndex(token_address).call() == 1
-assert c.functions.tokenIndex(another_token_address).call() == 2
+r = c.functions.declaratorCount(w3.eth.accounts[0]).call()
+assert r == 2
 
+r = c.functions.declaratorCount(w3.eth.accounts[1]).call()
+assert r == 1
+
+r = c.functions.declarator(w3.eth.accounts[1], 0).call()
+assert r == w3.eth.accounts[2]
+
+r = c.functions.declaration(w3.eth.accounts[2], w3.eth.accounts[1]).call()
+assert r[0].hex() == declarations[2][0][2:]
 

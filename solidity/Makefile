@@ -1,7 +1,7 @@
 all:
-	solc TokenEndorser.sol --abi | awk 'NR>3' > TokenEndorser.json
-	solc TokenEndorser.sol --bin | awk 'NR>3' > TokenEndorser.bin
-	truncate -s -1 TokenEndorser.bin
+	solc AddressDeclarator.sol --abi | awk 'NR>3' > AddressDeclarator.json
+	solc AddressDeclarator.sol --bin | awk 'NR>3' > AddressDeclarator.bin
+	truncate -s -1 AddressDeclarator.bin
 
 test: all
 	python test.py
