@@ -1,4 +1,4 @@
-"""Adds a new token endorsement 
+"""Deploys the token symbol index
 
 .. moduleauthor:: Louis Holbrook <dev@holbrook.no>
 .. pgp:: 0826EDA1702D1E87C6E2875121D2E7BB88C2A746 
@@ -26,12 +26,9 @@ data_dir = os.path.join(script_dir, '..', 'data')
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('-p', '--provider', dest='p', default='http://localhost:8545', type=str, help='Web3 provider url (http only)')
-argparser.add_argument('-a', '--contract-address', dest='a', type=str, help='Token endorsement contract address')
-argparser.add_argument('-t', '--token-address', dest='t', type=str, help='Contract address of token to endorse')
-argparser.add_argument('-o', '--endorser-address', dest='o', type=str, help='Address to use to sign endorsement transaction')
+argparser.add_argument('-o', '--owner', dest='o', type=str, help='Accounts declarator owner')
 argparser.add_argument('--abi-dir', dest='abi_dir', type=str, default=data_dir, help='Directory containing bytecode and abi (default: {})'.format(data_dir))
 argparser.add_argument('-v', action='store_true', help='Be verbose')
-argparser.add_argument('sha256hash', type=str, help='SHA256 sum of endorsement data')
 args = argparser.parse_args()
 
 if args.v:
@@ -40,19 +37,25 @@ if args.v:
 def main():
     w3 = web3.Web3(web3.Web3.HTTPProvider(args.p))
 
-    f = open(os.path.join(args.abi_dir, 'TokenEndorser.json'), 'r')
+    f = open(os.path.join(args.abi_dir, 'TokenUniqueSymbolIndex.json'), 'r')
     abi = json.load(f)
+    f.close()
+
+    f = open(os.path.join(args.abi_dir, 'TokenUniqueSymbolIndex.bin'), 'r')
+    bytecode = f.read()
     f.close()
 
     w3.eth.defaultAccount = w3.eth.accounts[0]
     if args.o != None:
         w3.eth.defaultAccount = args.o
-    logg.debug('endorser address {}'.format(w3.eth.defaultAccount))
+    logg.debug('owner address {}'.format(w3.eth.defaultAccount))
 
-    c = w3.eth.contract(abi=abi, address=args.a)
+    c = w3.eth.contract(abi=abi, bytecode=bytecode)
+    tx_hash = c.constructor().transact()
 
-    tx_hash = c.functions.add(args.t, args.sha256hash).transact()
-    print(tx_hash.hex())
+    rcpt = w3.eth.getTransactionReceipt(tx_hash)
+
+    print(rcpt.contractAddress)
 
 
 if __name__ == '__main__':
