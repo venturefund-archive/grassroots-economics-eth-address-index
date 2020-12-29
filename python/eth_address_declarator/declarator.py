@@ -15,15 +15,15 @@ moddir = os.path.dirname(__file__)
 datadir = os.path.join(moddir, 'data')
 
 
-class TokenEndorser:
+class AddressDeclarator:
 
     __abi = None
     __bytecode = None
     __address = None
 
     def __init__(self, w3, address, signer_address=None):
-        abi = TokenEndorser.abi()
-        TokenEndorser.bytecode()
+        abi = AddressDeclarator.abi()
+        AddressDeclarator.bytecode()
         self.__address = address
         self.contract = w3.eth.contract(abi=abi, address=address)
         self.w3 = w3
@@ -37,20 +37,20 @@ class TokenEndorser:
 
     @staticmethod
     def abi():
-        if TokenEndorser.__abi == None:
+        if AddressDeclarator.__abi == None:
             f = open(os.path.join(datadir, 'AccountDeclarator.json'), 'r')
             AccountDeclarator.__abi = json.load(f)
             f.close()
-        return TokenEndorser.__abi
+        return AddressDeclarator.__abi
 
 
     @staticmethod
     def bytecode():
-        if TokenEndorser.__bytecode == None:
+        if AddressDeclarator.__bytecode == None:
             f = open(os.path.join(datadir, 'AccountDeclarator.bin'))
             AccountDeclarator.__bytecode = f.read()
             f.close()
-        return TokenEndorser.__bytecode
+        return AddressDeclarator.__bytecode
 
 
 #    def token_from_symbol(self, symbol):

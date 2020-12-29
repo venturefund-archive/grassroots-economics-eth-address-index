@@ -8,6 +8,8 @@ import web3
 import eth_tester
 import eth_abi
 
+from eth_token_index import TokenUniqueSymbolIndex
+
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
 
@@ -86,38 +88,12 @@ class Test(unittest.TestCase):
 
 
     def test_basic(self):
-        c = self.w3.eth.contract(abi=self.abi, address=self.address)
+        ifc = TokenUniqueSymbolIndex(self.w3, self.address)
 
-        h = hashlib.new('sha256')
-        h.update('FOO'.encode('utf-8'))
-        z = h.digest()
+        logg.info('tx {}'.format(ifc.add(self.address_token_one)))
+        logg.info('tx {}'.format(ifc.add(self.address_token_two)))
 
-        # owner text
-        with self.assertRaises(Exception):
-            c.functions.register(z.hex(), self.address_token_one).transact({'from': self.w3.eth.accounts[1]})
-
-        logg.debug('using identifier {}'.format(z.hex()))
-        # Register FOO symbol
-        c.functions.register(z.hex(), self.address_token_one).transact({'from': self.w3.eth.accounts[0]})
-
-        # Raise on duplicate FOO symbol
-        with self.assertRaises(Exception):
-            c.functions.register(z.hex(), self.address_token_one).transact({'from': self.w3.eth.accounts[0]})
-
-        # Raise on mismatch between supplied symbol and token symbol reported by ERC20
-        with self.assertRaises(Exception):
-            c.functions.register(z.hex(), self.address_token_two).transact({'from': self.w3.eth.accounts[0]})
-
-        h = hashlib.new('sha256')
-        h.update('BAR'.encode('utf-8'))
-        z = h.digest()
-
-        # Register BAR symbol
-        c.functions.register(z.hex(), self.address_token_two).transact({'from': self.w3.eth.accounts[0]})
-
-        # Raise on duplicate BAR symbol (with different token contract address)
-        with self.assertRaises(Exception):
-            c.functions.register(z.hex(), self.address_token_three).transact({'from': self.w3.eth.accounts[0]})
+        assert ifc.count() == 2
 
 
 if __name__ == '__main__':

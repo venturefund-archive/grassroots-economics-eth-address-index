@@ -8,7 +8,7 @@ contract TokenUniqueSymbolIndex {
 	address public owner;
 
 	mapping ( bytes32 => uint256 ) public registry;
-	address[] public tokens;
+	address[] tokens;
 
 	constructor() {
 		owner = msg.sender;
@@ -50,6 +50,6 @@ contract TokenUniqueSymbolIndex {
 	}
 
 	function registryCount() public view returns ( uint256 ) {
-		return tokens.length;
+		return tokens.length - 1;
 	}
 }
