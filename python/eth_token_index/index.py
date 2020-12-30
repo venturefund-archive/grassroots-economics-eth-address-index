@@ -70,7 +70,7 @@ class TokenUniqueSymbolIndex:
 
 
     def get_index(self, idx):
-        return self.contract.functions.tokens(idx).call()
+        return self.contract.functions.entry(idx).call()
 
 
     def get_token_by_symbol(self, symbol):

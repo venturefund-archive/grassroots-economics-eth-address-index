@@ -95,6 +95,9 @@ class Test(unittest.TestCase):
 
         assert ifc.count() == 2
 
+        assert ifc.get_index(0) == self.address_token_one
+        assert ifc.get_index(1) == self.address_token_two
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -26,6 +26,10 @@ contract TokenUniqueSymbolIndex {
 		return false;
 	}
 
+	function entry(uint256 _idx) public view returns ( address ) {
+		return tokens[_idx + 1];
+	}
+
 	// EIP 172
 	function transferOwnership() public {
 		revert("owner cannot be changed");
