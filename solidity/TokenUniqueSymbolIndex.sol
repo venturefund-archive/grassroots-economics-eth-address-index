@@ -30,7 +30,7 @@ contract TokenUniqueSymbolIndex {
 		return tokens[_idx + 1];
 	}
 
-	// EIP 172
+	// EIP 173
 	function transferOwnership() public {
 		revert("owner cannot be changed");
 	}
