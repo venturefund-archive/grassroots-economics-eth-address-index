@@ -1,4 +1,4 @@
-pragma solidity >=0.6.12;
+pragma solidity >0.6.11;
 
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -10,7 +10,7 @@ contract TokenUniqueSymbolIndex {
 	mapping ( bytes32 => uint256 ) public registry;
 	address[] tokens;
 
-	constructor() {
+	constructor() public {
 		owner = msg.sender;
 		tokens.push(address(0));
 	}

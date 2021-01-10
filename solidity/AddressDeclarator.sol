@@ -1,4 +1,4 @@
-pragma solidity >=0.6.12;
+pragma solidity >0.6.11;
 
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -13,7 +13,7 @@ contract AddressDeclarator {
 	mapping( address => address[] ) declaratorReverse;
 	bytes32[][] public contents;
 
-	constructor(bytes32 _initialDescription) {
+	constructor(bytes32 _initialDescription) public {
 		bytes32[] memory foundation;
 
 		owner = msg.sender;

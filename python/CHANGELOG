@@ -1,3 +1,6 @@
+- 0.1.0-unreleased
+	* Implement external signer
+	* Standardize cli arg flags
 - 0.0.3
 	* Add viewer cli
 - 0.0.2
