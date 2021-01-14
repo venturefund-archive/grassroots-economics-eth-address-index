@@ -83,6 +83,10 @@ def main():
                 c.functions.addDeclaration(args.address, args.declaration).buildTransaction,
                 ],
             )
+
+    if block_last:
+        helper.wait_for()
+
     print(tx_hash)
 
 

@@ -87,7 +87,9 @@ def main():
                 ],
                 force_wait=True,
             )
-    rcpt = w3.eth.getTransactionReceipt(tx_hash)
+
+    if block_last:
+        helper.wait_for()
 
     print(rcpt.contractAddress)
 
