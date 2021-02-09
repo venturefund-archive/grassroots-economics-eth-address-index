@@ -46,8 +46,8 @@ if args.vv:
 elif args.v:
     logg.setLevel(logging.INFO)
 
-block_last = args.w
 block_all = args.ww
+block_last = args.w or block_all
 
 w3 = web3.Web3(web3.Web3.HTTPProvider(args.p))
 
@@ -95,6 +95,9 @@ def main():
                 c.functions.register('0x' + z.hex(), args.address).buildTransaction,
                 ],
             )
+
+    if block_last:
+        helper.wait_for()
 
     print(tx_hash)
 
