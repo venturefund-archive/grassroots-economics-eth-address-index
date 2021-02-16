@@ -75,7 +75,7 @@ class AddressDeclarator:
 #        self.contract.functions.add(token_address, data).transact({'from': self.signer_address})
 #
 
-def to_endorsement_key(declarator_address_hex, declaration_address_hex):
+def to_declarator_key(declarator_address_hex, declaration_address_hex):
     h = hashlib.new('sha256')
     h.update(bytes.fromhex(token_address_hex[2:]))
     h.update(bytes.fromhex(endorser_address_hex[2:]))
