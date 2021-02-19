@@ -16,7 +16,7 @@ import web3
 from crypto_dev_signer.eth.signer import ReferenceSigner as EIP155Signer
 from crypto_dev_signer.keystore import DictKeystore
 from crypto_dev_signer.eth.helper import EthTxExecutor
-from chainspec.chain import ChainSpec
+from chainlib.chain import ChainSpec
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
