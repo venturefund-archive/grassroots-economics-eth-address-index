@@ -17,6 +17,7 @@ import web3
 from crypto_dev_signer.eth.signer import ReferenceSigner as EIP155Signer
 from crypto_dev_signer.keystore import DictKeystore
 from crypto_dev_signer.eth.helper import EthTxExecutor
+from chainlib.chain import ChainSpec
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
@@ -59,8 +60,8 @@ if args.y != None:
     logg.debug('now have key for signer address {}'.format(signer_address))
 signer = EIP155Signer(keystore)
 
-chain_pair = args.i.split(':')
-chain_id = int(chain_pair[1])
+chain_spec = ChainSpec.from_chain_str(args.i)
+chain_id = chain_spec.network_id()
 
 helper = EthTxExecutor(
         w3,

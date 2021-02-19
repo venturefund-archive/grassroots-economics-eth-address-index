@@ -38,8 +38,8 @@ class AddressDeclarator:
     @staticmethod
     def abi():
         if AddressDeclarator.__abi == None:
-            f = open(os.path.join(datadir, 'AccountDeclarator.json'), 'r')
-            AccountDeclarator.__abi = json.load(f)
+            f = open(os.path.join(datadir, 'AddressDeclarator.json'), 'r')
+            AddressDeclarator.__abi = json.load(f)
             f.close()
         return AddressDeclarator.__abi
 
@@ -47,8 +47,8 @@ class AddressDeclarator:
     @staticmethod
     def bytecode():
         if AddressDeclarator.__bytecode == None:
-            f = open(os.path.join(datadir, 'AccountDeclarator.bin'))
-            AccountDeclarator.__bytecode = f.read()
+            f = open(os.path.join(datadir, 'AddressDeclarator.bin'))
+            AddressDeclarator.__bytecode = f.read()
             f.close()
         return AddressDeclarator.__bytecode
 
