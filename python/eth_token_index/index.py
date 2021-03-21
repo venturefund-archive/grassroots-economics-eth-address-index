@@ -41,8 +41,7 @@ class TokenUniqueSymbolIndex(TxFactory):
 
     __abi = None
     __bytecode = None
-    __address = None
-    __erc20_abi = None
+
 
     @staticmethod
     def abi():
@@ -135,17 +134,3 @@ class TokenUniqueSymbolIndex(TxFactory):
     @classmethod
     def parse_entry_count(self, v):
         return abi_decode_single(ABIContractType.UINT256, v)
-
-
-#    def count(self):
-#        return self.contract.functions.registryCount().call()
-#
-#
-#    def get_index(self, idx):
-#        return self.contract.functions.entry(idx).call()
-#
-#
-#    def get_token_by_symbol(self, symbol):
-#        ref = to_ref(symbol)
-#        return self.contract.functions.addressOf(symbol).call()
-

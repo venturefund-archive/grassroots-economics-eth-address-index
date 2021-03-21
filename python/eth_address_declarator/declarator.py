@@ -9,31 +9,40 @@ import json
 import os
 import hashlib
 
+# external imports
+from hexathon import (
+        strip_0x,
+        add_0x,
+        )
+from chainlib.eth.tx import (
+        TxFormat,
+        TxFactory,
+        )
+from chainlib.eth.contract import (
+        ABIContractEncoder,
+        ABIContractType,
+        abi_decode_single,
+        )
+from chainlib.jsonrpc import jsonrpc_template
+from chainlib.eth.constant import ZERO_ADDRESS
+
 logg = logging.getLogger(__name__)
 
 moddir = os.path.dirname(__file__)
 datadir = os.path.join(moddir, 'data')
 
 
-class AddressDeclarator:
+def to_declarator_key(declarator_address_hex, declaration_address_hex):
+    h = hashlib.new('sha256')
+    h.update(bytes.fromhex(strip_0x(declaration_address_hex)))
+    h.update(bytes.fromhex(strip_0x(declarator_address_hex)))
+    return h.digest()
+
+
+class AddressDeclarator(TxFactory):
 
     __abi = None
     __bytecode = None
-    __address = None
-
-    def __init__(self, w3, address, signer_address=None):
-        abi = AddressDeclarator.abi()
-        AddressDeclarator.bytecode()
-        self.__address = address
-        self.contract = w3.eth.contract(abi=abi, address=address)
-        self.w3 = w3
-        if signer_address != None:
-            self.signer_address = signer_address
-        else:
-            if type(self.w3.eth.defaultAccount).__name__ == 'Empty':
-                self.w3.eth.defaultAccount = self.w3.eth.accounts[0]
-            self.signer_address = self.w3.eth.defaultAccount
-
 
     @staticmethod
     def abi():
@@ -53,32 +62,118 @@ class AddressDeclarator:
         return AddressDeclarator.__bytecode
 
 
-#    def token_from_symbol(self, symbol):
-#        return self.contract.functions.tokenSymbolIndex(symbol).call()
-#    def 
+    def constructor(self, sender_address, initial_description):
+        code = AddressDeclarator.bytecode()
+        enc = ABIContractEncoder()
+        initial_description_hex = add_0x(initial_description)
+        enc.bytes32(initial_description_hex)
+        code += enc.get()
+        tx = self.template(sender_address, None, use_nonce=True)
+        tx = self.set_code(tx, code)
+        return self.build(tx)
 
-#
-#    def endorsed_tokens(self, endorser_address):
-#        tokens = []
-#        for i in range(self.contract.functions.endorserTokenCount(endorser_address).call()):
-#            tidx = self.contract.functions.endorser(endorser_address, i).call()
-#            t = self.contract.functions.tokens(tidx).call()
-#            tokens.append(t)
-#        return tokens
-#
-#    def declared(self, declarator_address):
-#        addresses = []
-#        for i 
-#
-#
-#    def add(self, token_address, data):
-#        self.contract.functions.add(token_address, data).transact({'from': self.signer_address})
-#
-
-def to_declarator_key(declarator_address_hex, declaration_address_hex):
-    h = hashlib.new('sha256')
-    h.update(bytes.fromhex(token_address_hex[2:]))
-    h.update(bytes.fromhex(endorser_address_hex[2:]))
-    return h.digest()
+    
+    def add_declaration(self, contract_address, sender_address, subject_address, proof, tx_format=TxFormat.JSONRPC):
+        enc = ABIContractEncoder()
+        enc.method('addDeclaration')
+        enc.typ(ABIContractType.ADDRESS)
+        enc.typ(ABIContractType.BYTES32)
+        enc.address(subject_address)
+        enc.bytes32(proof)
+        data = enc.get()
+        tx = self.template(sender_address, contract_address, use_nonce=True)
+        tx = self.set_code(tx, data)
+        tx = self.finalize(tx, tx_format)
+        return tx
 
 
+    def declarator_count(self, contract_address, subject_address, sender_address=ZERO_ADDRESS):
+        o = jsonrpc_template()
+        o['method'] = 'eth_call'
+        enc = ABIContractEncoder()
+        enc.method('declaratorCount')
+        enc.typ(ABIContractType.ADDRESS)
+        enc.address(subject_address)
+        data = add_0x(enc.get())
+        tx = self.template(sender_address, contract_address)
+        tx = self.set_code(tx, data)
+        o['params'].append(self.normalize(tx))
+        return o
+
+
+    def declaration(self, contract_address, declarator_address, subject_address, sender_address=ZERO_ADDRESS):
+        o = jsonrpc_template()
+        o['method'] = 'eth_call'
+        enc = ABIContractEncoder()
+        enc.method('declaration')
+        enc.typ(ABIContractType.ADDRESS)
+        enc.typ(ABIContractType.ADDRESS)
+        enc.address(declarator_address)
+        enc.address(subject_address)
+        data = add_0x(enc.get())
+        tx = self.template(sender_address, contract_address)
+        tx = self.set_code(tx, data)
+        o['params'].append(self.normalize(tx))
+        return o
+
+
+    def declaration_address_at(self, contract_address, declarator_address, idx, sender_address=ZERO_ADDRESS):
+        o = jsonrpc_template()
+        o['method'] = 'eth_call'
+        enc = ABIContractEncoder()
+        enc.method('declarationAddressAt')
+        enc.typ(ABIContractType.ADDRESS)
+        enc.typ(ABIContractType.UINT256)
+        enc.address(declarator_address)
+        enc.uint256(idx)
+        data = add_0x(enc.get())
+        tx = self.template(sender_address, contract_address)
+        tx = self.set_code(tx, data)
+        o['params'].append(self.normalize(tx))
+        return o
+
+
+    def declarator_address_at(self, contract_address, subject_address, idx, sender_address=ZERO_ADDRESS):
+        o = jsonrpc_template()
+        o['method'] = 'eth_call'
+        enc = ABIContractEncoder()
+        enc.method('declaratorAddressAt')
+        enc.typ(ABIContractType.ADDRESS)
+        enc.typ(ABIContractType.UINT256)
+        enc.address(subject_address)
+        enc.uint256(idx)
+        data = add_0x(enc.get())
+        tx = self.template(sender_address, contract_address)
+        tx = self.set_code(tx, data)
+        o['params'].append(self.normalize(tx))
+        return o
+
+
+    @classmethod
+    def parse_declarator_count(self, v):
+        return abi_decode_single(ABIContractType.UINT256, v)
+
+    
+    @classmethod
+    def parse_declaration(self, v):
+        cursor = 0
+        v = strip_0x(v)
+        position = int.from_bytes(bytes.fromhex(v[cursor:cursor+64]), 'big')
+        cursor += (position * 2)
+        length = int.from_bytes(bytes.fromhex(v[cursor:cursor+64]), 'big')
+        cursor += 64
+        r = []
+        for i in range(length):
+            r.append(v[cursor:cursor+64])
+            cursor += 64
+        return r 
+
+
+    @classmethod
+    def parse_declaration_address_at(self, v):
+        return abi_decode_single(ABIContractType.ADDRESS, v)
+
+
+    @classmethod
+    def parse_declarator_address_at(self, v):
+        return abi_decode_single(ABIContractType.ADDRESS, v)
