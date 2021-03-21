@@ -42,7 +42,7 @@ contract TokenUniqueSymbolIndex {
 		return tokens[idx];
 	}
 
-	function register(bytes32 _key, address _token) public returns (bool) {
+	function register(address _token) public returns (bool) {
 		require(msg.sender == owner);
 
 		bytes memory token_symbol;
@@ -55,7 +55,6 @@ contract TokenUniqueSymbolIndex {
 		token_symbol = abi.decode(_r, (bytes));
 		token_symbol_key = sha256(token_symbol);
 
-		require(_key == token_symbol_key);
 		idx = registry[token_symbol_key];
 		require(idx == 0);
 
@@ -64,7 +63,7 @@ contract TokenUniqueSymbolIndex {
 		return true;
 	}
 
-	function registryCount() public view returns ( uint256 ) {
+	function entryCount() public view returns ( uint256 ) {
 		return tokens.length - 1;
 	}
 }

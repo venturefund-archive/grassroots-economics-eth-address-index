@@ -9,36 +9,40 @@ import json
 import os
 import hashlib
 
+# external imports
+from chainlib.eth.contract import (
+        ABIContractEncoder,
+        ABIContractType,
+        abi_decode_single,
+        )
+from chainlib.eth.tx import (
+        TxFactory,
+        TxFormat,
+        )
+from chainlib.jsonrpc import jsonrpc_template
+from chainlib.eth.constant import ZERO_ADDRESS
+from hexathon import (
+        add_0x,
+        )
+
 logg = logging.getLogger(__name__)
 
 moddir = os.path.dirname(__file__)
 datadir = os.path.join(moddir, 'data')
 
 
-class TokenUniqueSymbolIndex:
+def to_identifier(s):
+    h = hashlib.new('sha256')
+    h.update(s.encode('utf-8'))
+    return h.digest().hex()
+
+
+class TokenUniqueSymbolIndex(TxFactory):
 
     __abi = None
     __bytecode = None
     __address = None
     __erc20_abi = None
-
-    def __init__(self, w3, address, signer_address=None):
-        abi = TokenUniqueSymbolIndex.abi()
-        TokenUniqueSymbolIndex.bytecode()
-        self.__address = address
-        self.contract = w3.eth.contract(abi=abi, address=address)
-        self.w3 = w3
-        if signer_address != None:
-            self.signer_address = signer_address
-        else:
-            if type(self.w3.eth.defaultAccount).__name__ == 'Empty':
-                self.w3.eth.defaultAccount = self.w3.eth.accounts[0]
-            self.signer_address = self.w3.eth.defaultAccount
-        
-        f = open(os.path.join(datadir, 'ERC20.json'), 'r')
-        TokenUniqueSymbolIndex.__erc20_abi = json.load(f)
-        f.close()
-
 
     @staticmethod
     def abi():
@@ -58,27 +62,90 @@ class TokenUniqueSymbolIndex:
         return TokenUniqueSymbolIndex.__bytecode
 
 
-    def add(self, address):
-        c = self.w3.eth.contract(abi=TokenUniqueSymbolIndex.__erc20_abi, address=address)
-        s = c.functions.symbol().call()
-        h = to_ref(s)
-        return self.contract.functions.register(h, address).transact({'from':self.signer_address})
+    def constructor(self, sender_address):
+        code = TokenUniqueSymbolIndex.bytecode()
+        tx = self.template(sender_address, None, use_nonce=True)
+        tx = self.set_code(tx, code)
+        return self.build(tx)
 
 
-    def count(self):
-        return self.contract.functions.registryCount().call()
+    def register(self, contract_address, sender_address, address, tx_format=TxFormat.JSONRPC):
+        enc = ABIContractEncoder()
+        enc.method('register')
+        enc.typ(ABIContractType.ADDRESS)
+        enc.address(address)
+        data = enc.get()
+        tx = self.template(sender_address, contract_address, use_nonce=True)
+        tx = self.set_code(tx, data)
+        tx = self.finalize(tx, tx_format)
+        return tx
 
 
-    def get_index(self, idx):
-        return self.contract.functions.entry(idx).call()
+    def address_of(self, contract_address, token_symbol, sender_address=ZERO_ADDRESS):
+        o = jsonrpc_template()
+        o['method'] = 'eth_call'
+        enc = ABIContractEncoder()
+        enc.method('addressOf')
+        enc.typ(ABIContractType.BYTES32)
+        token_symbol_digest = to_identifier(token_symbol)
+        enc.bytes32(token_symbol_digest)
+        data = add_0x(enc.get())
+        tx = self.template(sender_address, contract_address)
+        tx = self.set_code(tx, data)
+        o['params'].append(self.normalize(tx))
+        return o
 
 
-    def get_token_by_symbol(self, symbol):
-        ref = to_ref(symbol)
-        return self.contract.functions.addressOf(symbol).call()
+    def entry(self, contract_address, idx, sender_address=ZERO_ADDRESS):
+        o = jsonrpc_template()
+        o['method'] = 'eth_call'
+        enc = ABIContractEncoder()
+        enc.method('entry')
+        enc.typ(ABIContractType.UINT256)
+        enc.uint256(idx)
+        data = add_0x(enc.get())
+        tx = self.template(sender_address, contract_address)
+        tx = self.set_code(tx, data)
+        o['params'].append(self.normalize(tx))
+        return o
 
 
-def to_ref(s):
-    h = hashlib.new('sha256')
-    h.update(s.encode('utf-8'))
-    return h.digest().hex()
+    def entry_count(self, contract_address, sender_address=ZERO_ADDRESS):
+        o = jsonrpc_template()
+        o['method'] = 'eth_call'
+        enc = ABIContractEncoder()
+        enc.method('entryCount')
+        data = add_0x(enc.get())
+        tx = self.template(sender_address, contract_address)
+        tx = self.set_code(tx, data)
+        o['params'].append(self.normalize(tx))
+        return o
+
+
+    @classmethod
+    def parse_address_of(self, v):
+        return abi_decode_single(ABIContractType.ADDRESS, v)
+
+
+    @classmethod
+    def parse_entry(self, v):
+        return abi_decode_single(ABIContractType.ADDRESS, v)
+
+
+    @classmethod
+    def parse_entry_count(self, v):
+        return abi_decode_single(ABIContractType.UINT256, v)
+
+
+#    def count(self):
+#        return self.contract.functions.registryCount().call()
+#
+#
+#    def get_index(self, idx):
+#        return self.contract.functions.entry(idx).call()
+#
+#
+#    def get_token_by_symbol(self, symbol):
+#        ref = to_ref(symbol)
+#        return self.contract.functions.addressOf(symbol).call()
+
