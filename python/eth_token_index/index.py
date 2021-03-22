@@ -61,6 +61,11 @@ class TokenUniqueSymbolIndex(TxFactory):
         return TokenUniqueSymbolIndex.__bytecode
 
 
+    @staticmethod
+    def gas(code=None):
+        return 1200000
+
+
     def constructor(self, sender_address):
         code = TokenUniqueSymbolIndex.bytecode()
         tx = self.template(sender_address, None, use_nonce=True)
