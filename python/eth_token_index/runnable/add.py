@@ -83,19 +83,16 @@ def main():
     c = TokenUniqueSymbolIndex(signer=signer, gas_oracle=gas_oracle, nonce_oracle=nonce_oracle, chain_id=chain_id)
     (tx_hash_hex, o) = c.register(contract_address, signer_address, token_address)
     rpc.do(o)
-    o = receipt(tx_hash_hex)
-    r = rpc.do(o)
-    if r['status'] == 0:
-        sys.stderr.write('EVM revert while deploying contract. Wish I had more to tell you')
-        sys.exit(1)
+    if block_last:
+        r = rpc.wait(tx_hash_hex)
+        if r['status'] == 0:
+            sys.stderr.write('EVM revert while deploying contract. Wish I had more to tell you')
+            sys.exit(1)
 
     c = ERC20()
     o = c.symbol(token_address)
     r = rpc.do(o)
     token_symbol = ERC20.parse_symbol(r)
-
-    if block_last:
-        helper.wait_for()
 
     logg.info('added token {} at {} to token index {}'.format(token_symbol, token_address, contract_address))
 

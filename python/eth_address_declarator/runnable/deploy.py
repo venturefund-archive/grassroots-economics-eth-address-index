@@ -80,18 +80,17 @@ def main():
     c = AddressDeclarator(signer=signer, gas_oracle=gas_oracle, nonce_oracle=nonce_oracle, chain_id=chain_id)
     (tx_hash_hex, o) = c.constructor(signer_address, initial_description)
     rpc.do(o)
-    o = receipt(tx_hash_hex)
-    r = rpc.do(o)
-    if r['status'] == 0:
-        sys.stderr.write('EVM revert while deploying contract. Wish I had more to tell you')
-        sys.exit(1)
-    # TODO: pass through translator for keys (evm tester uses underscore instead of camelcase)
-    address = r['contractAddress']
-
     if block_last:
-        rpc.wait(tx_hash_hex)
+        r = rpc.wait(tx_hash_hex)
+        if r['status'] == 0:
+            sys.stderr.write('EVM revert while deploying contract. Wish I had more to tell you')
+            sys.exit(1)
+        # TODO: pass through translator for keys (evm tester uses underscore instead of camelcase)
+        address = r['contractAddress']
 
-    print(address)
+        print(address)
+    else:
+        print(tx_hash_hex)
 
     sys.exit(0)
 

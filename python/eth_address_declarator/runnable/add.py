@@ -49,6 +49,9 @@ if args.vv:
 elif args.v:
     logg.setLevel(logging.INFO)
 
+block_last = args.w
+block_all = args.ww
+
 passphrase_env = 'ETH_PASSPHRASE'
 if args.env_prefix != None:
     passphrase_env = args.env_prefix + '_' + passphrase_env
@@ -81,11 +84,11 @@ def main():
     c = AddressDeclarator(signer=signer, gas_oracle=gas_oracle, nonce_oracle=nonce_oracle, chain_id=chain_id)
     (tx_hash_hex, o) = c.add_declaration(contract_address, signer_address, subject_address, declaration)
     rpc.do(o)
-    o = receipt(tx_hash_hex)
-    r = rpc.do(o)
-    if r['status'] == 0:
-        sys.stderr.write('EVM revert while deploying contract. Wish I had more to tell you')
-        sys.exit(1)
+    if block_last:
+        r = rpc.wait(tx_hash_hex)
+        if r['status'] == 0:
+            sys.stderr.write('EVM revert while deploying contract. Wish I had more to tell you')
+            sys.exit(1)
 
     print(tx_hash_hex)
 
