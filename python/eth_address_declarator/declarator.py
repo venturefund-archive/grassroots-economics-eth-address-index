@@ -62,6 +62,11 @@ class AddressDeclarator(TxFactory):
         return AddressDeclarator.__bytecode
 
 
+    @staticmethod
+    def gas(code=None):
+        return 2000000
+
+
     def constructor(self, sender_address, initial_description):
         code = AddressDeclarator.bytecode()
         enc = ABIContractEncoder()
