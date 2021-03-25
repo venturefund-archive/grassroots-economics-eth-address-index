@@ -88,7 +88,7 @@ def main():
     token_ifc = ERC20()
     ifc = TokenUniqueSymbolIndex()
     if token_symbol != None:
-        element(ifc, contract_address, token_ifc, token_symbol, fmt, sys.stdout)
+        element(ifc, contract_address, token_symbol, fmt, sys.stdout)
     else:
         ls(ifc, contract_address, token_ifc, fmt, sys.stdout)
 
