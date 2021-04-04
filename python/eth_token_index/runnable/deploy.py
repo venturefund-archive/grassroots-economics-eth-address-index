@@ -32,7 +32,7 @@ data_dir = os.path.join(script_dir, '..', 'data')
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('-p', '--provider', dest='p', default='http://localhost:8545', type=str, help='Web3 provider url (http only)')
-argparser.add_argument('-i', '--chain-spec', dest='i', type=str, default='Ethereum:1', help='Chain specification string')
+argparser.add_argument('-i', '--chain-spec', dest='i', type=str, default='evm:ethereum:1', help='Chain specification string')
 argparser.add_argument('-w', action='store_true', help='Wait for the last transaction to be confirmed')
 argparser.add_argument('-ww', action='store_true', help='Wait for every transaction to be confirmed')
 argparser.add_argument('-y', '--key-file', dest='y', type=str, help='Ethereum keystore file to use for signing')
@@ -66,7 +66,6 @@ if args.y != None:
 signer = EIP155Signer(keystore)
 
 chain_spec = ChainSpec.from_chain_str(args.i)
-chain_id = chain_spec.network_id()
 
 rpc = EthHTTPConnection(args.p)
 nonce_oracle = RPCNonceOracle(signer_address, rpc)
@@ -75,7 +74,7 @@ gas_oracle = RPCGasOracle(rpc, code_callback=TokenUniqueSymbolIndex.gas)
 
 
 def main():
-    c = TokenUniqueSymbolIndex(signer=signer, gas_oracle=gas_oracle, nonce_oracle=nonce_oracle, chain_id=chain_id)
+    c = TokenUniqueSymbolIndex(chain_spec, signer=signer, gas_oracle=gas_oracle, nonce_oracle=nonce_oracle)
     (tx_hash_hex, o) = c.constructor(signer_address)
     rpc.do(o)
     if block_last:

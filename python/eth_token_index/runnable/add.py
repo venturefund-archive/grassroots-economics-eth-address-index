@@ -37,7 +37,7 @@ argparser.add_argument('-p', '--provider', dest='p', default='http://localhost:8
 argparser.add_argument('-w', action='store_true', help='Wait for the last transaction to be confirmed')
 argparser.add_argument('-ww', action='store_true', help='Wait for every transaction to be confirmed')
 argparser.add_argument('-y', '--key-file', dest='y', type=str, help='Ethereum keystore file to use for signing')
-argparser.add_argument('-i', '--chain-spec', dest='i', type=str, default='Ethereum:1', help='Chain specification string')
+argparser.add_argument('-i', '--chain-spec', dest='i', type=str, default='evm:ethereum:1', help='Chain specification string')
 argparser.add_argument('-a', '--contract-address', dest='a', required=True, type=str, help='Token index contract address')
 argparser.add_argument('-v', action='store_true', help='Be verbose')
 argparser.add_argument('-vv', action='store_true', help='Be more verbose')
@@ -70,7 +70,6 @@ if args.y != None:
 signer = EIP155Signer(keystore)
 
 chain_spec = ChainSpec.from_chain_str(args.i)
-chain_id = chain_spec.network_id()
 
 rpc = EthHTTPConnection(args.p)
 nonce_oracle = RPCNonceOracle(signer_address, rpc)
@@ -80,7 +79,7 @@ token_address = args.token_address
 
 
 def main():
-    c = TokenUniqueSymbolIndex(signer=signer, gas_oracle=gas_oracle, nonce_oracle=nonce_oracle, chain_id=chain_id)
+    c = TokenUniqueSymbolIndex(chain_spec, signer=signer, gas_oracle=gas_oracle, nonce_oracle=nonce_oracle)
     (tx_hash_hex, o) = c.register(contract_address, signer_address, token_address)
     rpc.do(o)
     if block_last:
@@ -89,7 +88,7 @@ def main():
             sys.stderr.write('EVM revert while deploying contract. Wish I had more to tell you')
             sys.exit(1)
 
-    c = ERC20()
+    c = ERC20(chain_spec)
     o = c.symbol(token_address)
     r = rpc.do(o)
     token_symbol = ERC20.parse_symbol(r)

@@ -32,7 +32,7 @@ data_dir = os.path.join(script_dir, '..', 'data')
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument('-p', '--provider', dest='p', default='http://localhost:8545', type=str, help='Web3 provider url (http only)')
-argparser.add_argument('-i', '--chain-spec', dest='i', type=str, default='Ethereum:1', help='Chain specification string')
+argparser.add_argument('-i', '--chain-spec', dest='i', type=str, default='evm:ethereum:1', help='Chain specification string')
 argparser.add_argument('-a', '--contract-address', dest='a', type=str, required=True, help='Token endorsement contract address')
 argparser.add_argument('-f', '--format', dest='f', type=str, default=default_format, help='Output format [human, brief]')
 argparser.add_argument('-v', action='store_true', help='Be verbose')
@@ -50,6 +50,8 @@ contract_address = args.a
 
 token_symbol = args.token_symbol
 fmt = args.f
+
+chain_spec = ChainSpec.from_chain_str(args.i)
 
 
 def out_element(e, fmt=default_format, w=sys.stdout):
@@ -85,8 +87,8 @@ def ls(ifc, contract_address, token_ifc, fmt=fmt, w=sys.stdout):
 
 
 def main():
-    token_ifc = ERC20()
-    ifc = TokenUniqueSymbolIndex()
+    token_ifc = ERC20(chain_spec)
+    ifc = TokenUniqueSymbolIndex(chain_spec)
     if token_symbol != None:
         element(ifc, contract_address, token_symbol, fmt, sys.stdout)
     else:
