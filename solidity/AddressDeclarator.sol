@@ -6,12 +6,15 @@ contract AddressDeclarator {
 
 	// EIP 173
 	address public owner;
+	address newOwner;
 
 	mapping( address => address[] ) declarationIndex;
 	mapping( bytes32 => uint256 ) declarationContentIndex;
 	mapping( address => address[] ) declarator;
 	mapping( address => address[] ) declaratorReverse;
 	bytes32[][] public contents;
+
+	event DeclarationAdded(address _declarator, address _subject, bytes32 _proof);
 
 	constructor(bytes32 _initialDescription) public {
 		bytes32[] memory foundation;
@@ -48,14 +51,17 @@ contract AddressDeclarator {
 		return k;
 	}
 
+	// Implements Declarator
 	function declaratorCount(address _subject) public view returns ( uint256 ) {
 		return declarator[_subject].length;
 	}
 
+	// Implements Declarator
 	function declaratorAddressAt(address _subject, uint256 _idx) public view returns ( address ) {
 		return declarator[_subject][_idx];
 	}
 
+	// Implements Declarator
 	function addDeclaration(address _subject, bytes32 _proof) public returns ( bool ) {
 		bytes32 k;
 		bytes32[] memory declarationContents;
@@ -74,6 +80,7 @@ contract AddressDeclarator {
 		return true;
 	}
 
+	// Implements Declarator
 	function declaration(address _declarator, address _subject) public view returns ( bytes32[] memory ) {
 		bytes32 k;
 		uint256 idx;
@@ -82,10 +89,12 @@ contract AddressDeclarator {
 		return contents[idx];
 	}
 
+	// Implements Declarator
 	function declarationCount(address _declarator) public view returns ( uint256 ) {
 		return declarationIndex[_declarator].length;
 	}
 
+	// Implements Declarator
 	function declarationAddressAt(address _declarator, uint256 _idx) public view returns ( address ) {
 		return declarationIndex[_declarator][_idx];
 	}

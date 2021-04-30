@@ -1,1 +1,1 @@
-from .declarator import AddressDeclarator
+from .interface import Declarator
