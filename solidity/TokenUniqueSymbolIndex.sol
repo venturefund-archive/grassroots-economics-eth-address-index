@@ -11,30 +11,17 @@ contract TokenUniqueSymbolIndex {
 	mapping ( bytes32 => uint256 ) public registry;
 	address[] tokens;
 
+	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner); // EIP173
+	event AddressAdded(address indexed addedAccount, uint256 indexed accountIndex); // AccountsIndex
+
 	constructor() public {
 		owner = msg.sender;
 		tokens.push(address(0));
 	}
 
-	// EIP 165
-	function supportsInterface(bytes4 _interfaceCode) public pure returns ( bool ) {
-		if (_interfaceCode == bytes4(0x325d15e2)) {
-			return true;
-		}
-		if (_interfaceCode == bytes4(0x01ffc9a7)) {
-			return true;
-		}
-		return false;
-	}
-
 	// Implements AccountsIndex
 	function entry(uint256 _idx) public view returns ( address ) {
 		return tokens[_idx + 1];
-	}
-
-	// EIP 173
-	function transferOwnership(address _toAddress) public returns (bool) {
-		require(ms
 	}
 
 	// Implements Registry
@@ -63,6 +50,7 @@ contract TokenUniqueSymbolIndex {
 
 		registry[token_symbol_key] = tokens.length;
 		tokens.push(_token);
+		emit AddressAdded(_token, tokens.length - 1);
 		return true;
 	}
 
@@ -75,5 +63,40 @@ contract TokenUniqueSymbolIndex {
 	// Implements AccountsIndex
 	function entryCount() public view returns ( uint256 ) {
 		return tokens.length - 1;
+	}
+
+	// Implements EIP173
+	function transferOwnership(address _newOwner) public returns (bool) {
+		require(msg.sender == owner);
+		newOwner = _newOwner;
+	}
+
+	// Implements OwnedAccepter
+	function acceptOwnership() public returns (bool) {
+		address oldOwner;
+
+		require(msg.sender == newOwner);
+		oldOwner = owner; 
+		owner = newOwner;
+		newOwner = address(0);
+		emit OwnershipTransferred(oldOwner, owner);
+	}
+
+
+	// Implements EIP165
+	function supportsInterface(bytes4 _sum) public pure returns (bool) {
+		if (_sum == 0xcbdb05c7) { // AccountsIndex
+			return true;
+		}
+		if (_sum == 0x01ffc9a7) { // EIP165
+			return true;
+		}
+		if (_sum == 0x9493f8b2) { // EIP173
+			return true;
+		}
+		if (_sum == 0x37a47be4) { // OwnedAccepter
+			return true;
+		}
+		return false;
 	}
 }

@@ -4,10 +4,6 @@ pragma solidity >0.6.11;
 
 contract AddressDeclarator {
 
-	// EIP 173
-	address public owner;
-	address newOwner;
-
 	mapping( address => address[] ) declarationIndex;
 	mapping( bytes32 => uint256 ) declarationContentIndex;
 	mapping( address => address[] ) declarator;
@@ -19,21 +15,10 @@ contract AddressDeclarator {
 	constructor(bytes32 _initialDescription) public {
 		bytes32[] memory foundation;
 
-		owner = msg.sender;
 		contents.push(foundation);
 		contents[contents.length-1].push(blockhash(block.number));
 
 		addDeclaration(msg.sender, _initialDescription);
-	}
-
-	// EIP 172
-	function transferOwnership() public {
-		revert("owner cannot be changed");
-	}
-
-	// EIP-165
-	function supportsInterface(bytes4 interfaceID) public view returns ( bool ) {
-		return false;
 	}
 	
 	function toReference(address _declarator, address _subject) private pure returns ( bytes32 ) {
@@ -97,5 +82,15 @@ contract AddressDeclarator {
 	// Implements Declarator
 	function declarationAddressAt(address _declarator, uint256 _idx) public view returns ( address ) {
 		return declarationIndex[_declarator][_idx];
+	}
+
+	// Implements EIP165
+	function supportsInterface(bytes4 _sum) public pure returns (bool) {
+		if (_sum == 0x27beb910) { // Implements Declarator
+			return true;
+		}
+		if (_sum == 0x01ffc9a7) { // EIP165
+			return true;
+		}
 	}
 }
