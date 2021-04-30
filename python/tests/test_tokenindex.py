@@ -30,7 +30,8 @@ class Test(EthTesterCase):
     def setUp(self):
         super(Test, self).setUp()
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
-        c = TokenUniqueSymbolIndex(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
+        #c = TokenUniqueSymbolIndex(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
+        c = TokenUniqueSymbolIndex(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.constructor(self.accounts[0])
         self.rpc.do(o)
 
@@ -40,7 +41,8 @@ class Test(EthTesterCase):
 
         self.address = r['contract_address']
 
-        c = GiftableToken(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
+        #c = GiftableToken(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
+        c = GiftableToken(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.constructor(self.accounts[0], 'FooToken', 'FOO', 6)
         self.rpc.do(o)
 
@@ -53,11 +55,12 @@ class Test(EthTesterCase):
 
     def test_register(self):
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
-        c = TokenUniqueSymbolIndex(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
+        #c = TokenUniqueSymbolIndex(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
+        c = TokenUniqueSymbolIndex(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         
         (tx_hash_hex, o) = c.register(self.address, self.accounts[0], self.token_address)
         self.rpc.do(o)
-        e = unpack(bytes.fromhex(strip_0x(o['params'][0])), chain_id=self.chain_spec.chain_id())
+        e = unpack(bytes.fromhex(strip_0x(o['params'][0])), self.chain_spec)
         logg.debug('e {}'.format(e))
 
         o = receipt(tx_hash_hex)

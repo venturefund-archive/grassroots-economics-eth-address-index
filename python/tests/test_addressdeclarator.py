@@ -35,7 +35,8 @@ class Test(EthTesterCase):
         super(Test, self).setUp()
         self.description = add_0x(os.urandom(32).hex())
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
+        #c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.constructor(self.accounts[0], self.description)
         self.rpc.do(o)
 
@@ -45,7 +46,8 @@ class Test(EthTesterCase):
 
         self.address = r['contract_address']
 
-        c = GiftableToken(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
+        #c = GiftableToken(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
+        c = GiftableToken(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.constructor(self.accounts[0], 'FooToken', 'FOO', 6)
         self.rpc.do(o)
 
@@ -55,7 +57,8 @@ class Test(EthTesterCase):
 
         self.foo_token_address = r['contract_address']
 
-        c = GiftableToken(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
+        #c = GiftableToken(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
+        c = GiftableToken(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.constructor(self.accounts[0], 'BarToken', 'BAR', 6)
         self.rpc.do(o)
 
@@ -66,23 +69,22 @@ class Test(EthTesterCase):
         self.bar_token_address = r['contract_address']
 
 
-
     def test_basic(self):
        
         d = add_0x(os.urandom(32).hex())
 
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle)
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[0], self.foo_token_address, d)
         self.rpc.do(o)
 
         nonce_oracle = RPCNonceOracle(self.accounts[1], self.rpc)
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle)
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[1], self.foo_token_address, d)
         self.rpc.do(o)
 
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle)
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[0], self.bar_token_address, d)
         self.rpc.do(o)
 
@@ -101,20 +103,20 @@ class Test(EthTesterCase):
         d_two = add_0x(os.urandom(32).hex())
 
         nonce_oracle = RPCNonceOracle(self.accounts[1], self.rpc)
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle)
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[1], self.foo_token_address, d)
         self.rpc.do(o)
 
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle)
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[1], self.foo_token_address, d_two)
         self.rpc.do(o)
 
         nonce_oracle = RPCNonceOracle(self.accounts[2], self.rpc)
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle)
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[2], self.foo_token_address, d)
         self.rpc.do(o)
 
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle)
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[2], self.bar_token_address, d)
         self.rpc.do(o)
 
@@ -130,17 +132,17 @@ class Test(EthTesterCase):
         d = add_0x(os.urandom(32).hex())
 
         nonce_oracle = RPCNonceOracle(self.accounts[1], self.rpc)
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle)
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[1], self.foo_token_address, d)
         self.rpc.do(o)
 
         nonce_oracle = RPCNonceOracle(self.accounts[2], self.rpc)
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle)
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[2], self.foo_token_address, d)
         self.rpc.do(o)
 
         nonce_oracle = RPCNonceOracle(self.accounts[1], self.rpc)
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle)
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[1], self.bar_token_address, d)
         self.rpc.do(o)
 
@@ -161,17 +163,17 @@ class Test(EthTesterCase):
         d = '0x' + os.urandom(32).hex()
 
         nonce_oracle = RPCNonceOracle(self.accounts[1], self.rpc)
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle)
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[1], self.foo_token_address, d)
         self.rpc.do(o)
 
         nonce_oracle = RPCNonceOracle(self.accounts[2], self.rpc)
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle)
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[2], self.foo_token_address, d)
         self.rpc.do(o)
 
         nonce_oracle = RPCNonceOracle(self.accounts[1], self.rpc)
-        c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle)
+        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[1], self.bar_token_address, d)
         self.rpc.do(o)
 

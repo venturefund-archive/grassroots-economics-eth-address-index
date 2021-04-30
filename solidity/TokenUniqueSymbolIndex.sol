@@ -6,6 +6,7 @@ contract TokenUniqueSymbolIndex {
 
 	// EIP 173
 	address public owner;
+	address newOwner;
 
 	mapping ( bytes32 => uint256 ) public registry;
 	address[] tokens;
@@ -26,15 +27,17 @@ contract TokenUniqueSymbolIndex {
 		return false;
 	}
 
+	// Implements AccountsIndex
 	function entry(uint256 _idx) public view returns ( address ) {
 		return tokens[_idx + 1];
 	}
 
 	// EIP 173
-	function transferOwnership() public {
-		revert("owner cannot be changed");
+	function transferOwnership(address _toAddress) public returns (bool) {
+		require(ms
 	}
 
+	// Implements Registry
 	function addressOf(bytes32 _key) public view returns ( address ) {
 		uint256 idx;
 
@@ -63,6 +66,13 @@ contract TokenUniqueSymbolIndex {
 		return true;
 	}
 
+	// Implements AccountsIndex
+	function add(address _token) public returns (bool) {
+		return register(_token);
+	}
+
+
+	// Implements AccountsIndex
 	function entryCount() public view returns ( uint256 ) {
 		return tokens.length - 1;
 	}
