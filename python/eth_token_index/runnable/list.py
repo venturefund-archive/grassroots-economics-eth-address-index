@@ -18,7 +18,7 @@ from crypto_dev_signer.eth.signer import ReferenceSigner as EIP155Signer
 from crypto_dev_signer.keystore.dict import DictKeystore
 from chainlib.chain import ChainSpec
 from chainlib.eth.connection import EthHTTPConnection
-from chainlib.eth.erc20 import ERC20
+from eth_erc20 import ERC20
 
 # local imports
 from eth_token_index import TokenUniqueSymbolIndex

@@ -28,7 +28,7 @@ from chainlib.eth.connection import EthHTTPConnection
 from chainlib.eth.tx import receipt
 
 # local imports
-from eth_address_declarator import AddressDeclarator
+from eth_address_declarator.declarator import AddressDeclarator
 
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()

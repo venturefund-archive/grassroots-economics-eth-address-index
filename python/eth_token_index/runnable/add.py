@@ -27,7 +27,7 @@ from chainlib.eth.gas import (
         )
 from chainlib.eth.connection import EthHTTPConnection
 from chainlib.eth.tx import receipt
-from chainlib.eth.erc20 import ERC20
+from eth_erc20 import ERC20
 
 # local imports
 from eth_token_index import TokenUniqueSymbolIndex
