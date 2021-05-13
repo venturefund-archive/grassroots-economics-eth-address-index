@@ -88,6 +88,9 @@ contract TokenUniqueSymbolIndex {
 		if (_sum == 0xcbdb05c7) { // AccountsIndex
 			return true;
 		}
+		if (_sum == 0xbb34534c) { // Registry
+			return true;
+		}
 		if (_sum == 0x01ffc9a7) { // EIP165
 			return true;
 		}
