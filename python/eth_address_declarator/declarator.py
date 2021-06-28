@@ -23,7 +23,6 @@ from chainlib.eth.contract import (
         ABIContractType,
         abi_decode_single,
         )
-from chainlib.jsonrpc import jsonrpc_template
 from chainlib.eth.constant import ZERO_ADDRESS
 
 # local imports

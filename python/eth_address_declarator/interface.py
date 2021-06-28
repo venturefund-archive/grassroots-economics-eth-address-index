@@ -17,7 +17,7 @@ from chainlib.eth.contract import (
         ABIContractType,
         abi_decode_single,
         )
-from chainlib.jsonrpc import jsonrpc_template
+from chainlib.jsonrpc import JSONRPCRequest
 from chainlib.eth.constant import ZERO_ADDRESS
 
 logg = logging.getLogger(__name__)
@@ -39,8 +39,9 @@ class Declarator(TxFactory):
         return tx
 
 
-    def declarator_count(self, contract_address, subject_address, sender_address=ZERO_ADDRESS):
-        o = jsonrpc_template()
+    def declarator_count(self, contract_address, subject_address, sender_address=ZERO_ADDRESS, id_generator=None):
+        j = JSONRPCRequest(id_generator)
+        o = j.template()
         o['method'] = 'eth_call'
         enc = ABIContractEncoder()
         enc.method('declaratorCount')
@@ -50,11 +51,13 @@ class Declarator(TxFactory):
         tx = self.template(sender_address, contract_address)
         tx = self.set_code(tx, data)
         o['params'].append(self.normalize(tx))
+        o = j.finalize(o)
         return o
 
 
-    def declaration(self, contract_address, declarator_address, subject_address, sender_address=ZERO_ADDRESS):
-        o = jsonrpc_template()
+    def declaration(self, contract_address, declarator_address, subject_address, sender_address=ZERO_ADDRESS, id_generator=None):
+        j = JSONRPCRequest(id_generator)
+        o = j.template()
         o['method'] = 'eth_call'
         enc = ABIContractEncoder()
         enc.method('declaration')
@@ -66,11 +69,13 @@ class Declarator(TxFactory):
         tx = self.template(sender_address, contract_address)
         tx = self.set_code(tx, data)
         o['params'].append(self.normalize(tx))
+        o = j.finalize(o)
         return o
 
 
-    def declaration_address_at(self, contract_address, declarator_address, idx, sender_address=ZERO_ADDRESS):
-        o = jsonrpc_template()
+    def declaration_address_at(self, contract_address, declarator_address, idx, sender_address=ZERO_ADDRESS, id_generator=None):
+        j = JSONRPCRequest(id_generator)
+        o = j.template()
         o['method'] = 'eth_call'
         enc = ABIContractEncoder()
         enc.method('declarationAddressAt')
@@ -82,11 +87,13 @@ class Declarator(TxFactory):
         tx = self.template(sender_address, contract_address)
         tx = self.set_code(tx, data)
         o['params'].append(self.normalize(tx))
+        o = j.finalize(o)
         return o
 
 
-    def declarator_address_at(self, contract_address, subject_address, idx, sender_address=ZERO_ADDRESS):
-        o = jsonrpc_template()
+    def declarator_address_at(self, contract_address, subject_address, idx, sender_address=ZERO_ADDRESS, id_generator=None):
+        j = JSONRPCRequest(id_generator)
+        o = j.template()
         o['method'] = 'eth_call'
         enc = ABIContractEncoder()
         enc.method('declaratorAddressAt')
@@ -98,6 +105,7 @@ class Declarator(TxFactory):
         tx = self.template(sender_address, contract_address)
         tx = self.set_code(tx, data)
         o['params'].append(self.normalize(tx))
+        o = j.finalize(o)
         return o
 
 

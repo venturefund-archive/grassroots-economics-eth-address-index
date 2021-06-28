@@ -19,7 +19,7 @@ from chainlib.eth.tx import (
         TxFactory,
         TxFormat,
         )
-from chainlib.jsonrpc import jsonrpc_template
+from chainlib.jsonrpc import JSONRPCRequest
 from chainlib.eth.constant import ZERO_ADDRESS
 from hexathon import (
         add_0x,
@@ -85,8 +85,9 @@ class TokenUniqueSymbolIndex(TxFactory):
         return tx
 
 
-    def address_of(self, contract_address, token_symbol, sender_address=ZERO_ADDRESS):
-        o = jsonrpc_template()
+    def address_of(self, contract_address, token_symbol, sender_address=ZERO_ADDRESS, id_generator=None):
+        j = JSONRPCRequest(id_generator)
+        o = j.template()
         o['method'] = 'eth_call'
         enc = ABIContractEncoder()
         enc.method('addressOf')
@@ -97,11 +98,13 @@ class TokenUniqueSymbolIndex(TxFactory):
         tx = self.template(sender_address, contract_address)
         tx = self.set_code(tx, data)
         o['params'].append(self.normalize(tx))
+        o = j.finalize(o)
         return o
 
 
-    def entry(self, contract_address, idx, sender_address=ZERO_ADDRESS):
-        o = jsonrpc_template()
+    def entry(self, contract_address, idx, sender_address=ZERO_ADDRESS, id_generator=None):
+        j = JSONRPCRequest(id_generator)
+        o = j.template()
         o['method'] = 'eth_call'
         enc = ABIContractEncoder()
         enc.method('entry')
@@ -111,11 +114,13 @@ class TokenUniqueSymbolIndex(TxFactory):
         tx = self.template(sender_address, contract_address)
         tx = self.set_code(tx, data)
         o['params'].append(self.normalize(tx))
+        o = j.finalize(o)
         return o
 
 
-    def entry_count(self, contract_address, sender_address=ZERO_ADDRESS):
-        o = jsonrpc_template()
+    def entry_count(self, contract_address, sender_address=ZERO_ADDRESS, id_generator=None):
+        j = JSONRPCRequest(id_generator)
+        o = j.template()
         o['method'] = 'eth_call'
         enc = ABIContractEncoder()
         enc.method('entryCount')
@@ -123,6 +128,7 @@ class TokenUniqueSymbolIndex(TxFactory):
         tx = self.template(sender_address, contract_address)
         tx = self.set_code(tx, data)
         o['params'].append(self.normalize(tx))
+        o = j.finalize(o)
         return o
 
 
