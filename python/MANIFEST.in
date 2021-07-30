@@ -1,1 +1,1 @@
-include **/data/*.json **/data/*.bin
+include **/data/*.json **/data/*.bin *requirements.txt
