@@ -13,21 +13,12 @@ import argparse
 import logging
 import hashlib
 
-# third-party imports
-from crypto_dev_signer.eth.signer import ReferenceSigner as EIP155Signer
-from crypto_dev_signer.keystore.dict import DictKeystore
+# external imports
+import chainlib.eth.cli
 from chainlib.chain import ChainSpec
-from chainlib.eth.nonce import (
-        RPCNonceOracle,
-        OverrideNonceOracle,
-        )
-from chainlib.eth.gas import (
-        RPCGasOracle,
-        OverrideGasOracle,
-        )
-from chainlib.eth.connection import EthHTTPConnection
 from chainlib.eth.tx import receipt
 from eth_erc20 import ERC20
+from chainlib.eth.address import to_checksum_address
 
 # local imports
 from eth_token_index import TokenUniqueSymbolIndex
@@ -35,92 +26,62 @@ from eth_token_index import TokenUniqueSymbolIndex
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
 
-script_dir = os.path.dirname(__file__)
-data_dir = os.path.join(script_dir, '..', 'data')
-
-argparser = argparse.ArgumentParser()
-argparser.add_argument('-p', '--provider', dest='p', default='http://localhost:8545', type=str, help='Web3 provider url (http only)')
-argparser.add_argument('-w', action='store_true', help='Wait for the last transaction to be confirmed')
-argparser.add_argument('-ww', action='store_true', help='Wait for every transaction to be confirmed')
-argparser.add_argument('-y', '--key-file', dest='y', type=str, help='Ethereum keystore file to use for signing')
-argparser.add_argument('-i', '--chain-spec', dest='i', type=str, default='evm:ethereum:1', help='Chain specification string')
-argparser.add_argument('-a', '--contract-address', dest='a', required=True, type=str, help='Token index contract address')
-argparser.add_argument('-v', action='store_true', help='Be verbose')
-argparser.add_argument('-vv', action='store_true', help='Be more verbose')
-argparser.add_argument('-d', action='store_true', help='Dump RPC calls to terminal and do not send')
-argparser.add_argument('--gas-price', type=int, dest='gas_price', help='Override gas price')
-argparser.add_argument('--nonce', type=int, help='Override transaction nonce')
-argparser.add_argument('--env-prefix', default=os.environ.get('CONFINI_ENV_PREFIX'), dest='env_prefix', type=str, help='environment prefix for variables to overwrite configuration')
+arg_flags = chainlib.eth.cli.argflag_std_write | chainlib.eth.cli.Flag.EXEC
+argparser = chainlib.eth.cli.ArgumentParser(arg_flags)
 argparser.add_argument('token_address', type=str, help='Token address to add to index')
 args = argparser.parse_args()
 
-if args.vv:
-    logg.setLevel(logging.DEBUG)
-elif args.v:
-    logg.setLevel(logging.INFO)
+extra_args = {
+    'token_address': None,
+        }
+config = chainlib.eth.cli.Config.from_args(args, arg_flags, extra_args=extra_args, default_fee_limit=TokenUniqueSymbolIndex.gas())
 
-block_all = args.ww
-block_last = args.w or block_all
+wallet = chainlib.eth.cli.Wallet()
+wallet.from_config(config)
 
-passphrase_env = 'ETH_PASSPHRASE'
-if args.env_prefix != None:
-    passphrase_env = args.env_prefix + '_' + passphrase_env
-passphrase = os.environ.get(passphrase_env)
-if passphrase == None:
-    logg.warning('no passphrase given')
-    passphrase=''
+rpc = chainlib.eth.cli.Rpc(wallet=wallet)
+conn = rpc.connect_by_config(config)
 
-signer_address = None
-keystore = DictKeystore()
-if args.y != None:
-    logg.debug('loading keystore file {}'.format(args.y))
-    signer_address = keystore.import_keystore_file(args.y, password=passphrase)
-    logg.debug('now have key for signer address {}'.format(signer_address))
-signer = EIP155Signer(keystore)
-
-chain_spec = ChainSpec.from_chain_str(args.i)
-
-rpc = EthHTTPConnection(args.p)
-nonce_oracle = None
-if args.nonce != None:
-    nonce_oracle = OverrideNonceOracle(signer_address, args.nonce)
-else:
-    nonce_oracle = RPCNonceOracle(signer_address, rpc)
-
-gas_oracle = None
-if args.gas_price !=None:
-    gas_oracle = OverrideGasOracle(price=args.gas_price, conn=rpc, code_callback=TokenUniqueSymbolIndex.gas)
-else:
-    gas_oracle = RPCGasOracle(rpc, code_callback=TokenUniqueSymbolIndex.gas)
-
-dummy = args.d
-
-contract_address = args.a
-token_address = args.token_address
+chain_spec = ChainSpec.from_chain_str(config.get('CHAIN_SPEC'))
 
 
 def main():
+    signer = rpc.get_signer()
+    signer_address = rpc.get_sender_address()
+
+    gas_oracle = rpc.get_gas_oracle()
+    nonce_oracle = rpc.get_nonce_oracle()
+
     c = TokenUniqueSymbolIndex(chain_spec, signer=signer, gas_oracle=gas_oracle, nonce_oracle=nonce_oracle)
+
+    token_address = to_checksum_address(config.get('_TOKEN_ADDRESS'))
+    if not config.true('_UNSAFE') and token_address != add_0x(config.get('_TOKEN_ADDRESS')):
+        raise ValueError('invalid checksum address for token_address')
+
+    contract_address = to_checksum_address(config.get('_EXEC_ADDRESS'))
+    if not config.true('_UNSAFE') and contract_address != add_0x(config.get('_EXEC_ADDRESS')):
+        raise ValueError('invalid checksum address for contract')
+
     (tx_hash_hex, o) = c.register(contract_address, signer_address, token_address)
-    if dummy:
-        print(tx_hash_hex)
-        print(o)
-    else:
-        rpc.do(o)
-        if block_last:
-            r = rpc.wait(tx_hash_hex)
+
+    if config.get('_RPC_SEND'):
+        conn.do(o)
+        if config.get('_WAIT'):
+            r = conn.wait(tx_hash_hex)
             if r['status'] == 0:
                 sys.stderr.write('EVM revert while deploying contract. Wish I had more to tell you')
                 sys.exit(1)
 
         c = ERC20(chain_spec)
         o = c.symbol(token_address)
-        r = rpc.do(o)
+        r = conn.do(o)
         token_symbol = ERC20.parse_symbol(r)
 
         logg.info('added token {} at {} to token index {}'.format(token_symbol, token_address, contract_address))
 
         print(tx_hash_hex)
+    else:
+        print(o)
 
 
 if __name__ == '__main__':
