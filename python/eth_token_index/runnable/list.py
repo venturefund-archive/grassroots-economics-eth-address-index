@@ -49,7 +49,10 @@ chain_spec = ChainSpec.from_chain_str(config.get('CHAIN_SPEC'))
 
 
 def out_element(e, w=sys.stdout):
-    w.write(e[1] + '\t' + e[0] + '\n')
+    if config.get('_RAW'):
+        w.write(e[1] + '\n')
+    else:
+        w.write(e[1] + '\t' + e[0] + '\n')
 
 
 def element(ifc, conn, contract_address, token_symbol, w=sys.stdout):
