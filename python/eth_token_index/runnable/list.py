@@ -18,6 +18,7 @@ import chainlib.eth.cli
 from chainlib.chain import ChainSpec
 from eth_erc20 import ERC20
 from chainlib.eth.address import to_checksum_address
+from hexathon import add_0x
 
 # local imports
 from eth_token_index import TokenUniqueSymbolIndex
