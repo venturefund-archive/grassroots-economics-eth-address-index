@@ -17,10 +17,10 @@ logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
 
 
-class TestBase(EthTesterCase):
+class TestAddressDeclaratorBase(EthTesterCase):
 
     def setUp(self):
-        super(TestBase, self).setUp()
+        super(TestAddressDeclaratorBase, self).setUp()
         self.description = add_0x(os.urandom(32).hex())
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
         c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)

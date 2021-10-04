@@ -22,7 +22,7 @@ from hexathon import (
 # local imports
 from eth_address_declarator.declarator import AddressDeclarator
 from eth_address_declarator import Declarator
-from tests.test_addressdeclarator_base import TestBase
+from eth_address_declarator.unittest import TestAddressDeclaratorBase
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
@@ -32,7 +32,7 @@ testdir = os.path.dirname(__file__)
 description = '0x{:<064s}'.format(b'foo'.hex())
 
 
-class TestAddressDeclarator(TestBase):
+class TestAddressDeclarator(TestAddressDeclaratorBase):
 
     def setUp(self):
         super(TestAddressDeclarator, self).setUp()
@@ -145,15 +145,15 @@ class TestAddressDeclarator(TestBase):
 
         o = c.declaration_address_at(self.address, self.accounts[1], 0, sender_address=self.accounts[0])
         r = self.rpc.do(o)
-        self.assertEqual(c.parse_declaration_address_at(r), self.foo_token_address)
+        self.assertEqual(c.parse_declaration_address_at(r), strip_0x(self.foo_token_address))
 
         o = c.declaration_address_at(self.address, self.accounts[2], 0, sender_address=self.accounts[0])
         r = self.rpc.do(o)
-        self.assertEqual(c.parse_declaration_address_at(r), self.foo_token_address)
+        self.assertEqual(c.parse_declaration_address_at(r), strip_0x(self.foo_token_address))
 
         o = c.declaration_address_at(self.address, self.accounts[1], 1, sender_address=self.accounts[0])
         r = self.rpc.do(o)
-        self.assertEqual(c.parse_declaration_address_at(r), self.bar_token_address)
+        self.assertEqual(c.parse_declaration_address_at(r), strip_0x(self.bar_token_address))
 
 
     def test_subject_to_declarator(self):
@@ -176,11 +176,11 @@ class TestAddressDeclarator(TestBase):
 
         o = c.declarator_address_at(self.address, self.foo_token_address, 0, sender_address=self.accounts[0])
         r = self.rpc.do(o)
-        self.assertEqual(c.parse_declaration_address_at(r), self.accounts[1])
+        self.assertEqual(c.parse_declaration_address_at(r), strip_0x(self.accounts[1]))
 
         o = c.declarator_address_at(self.address, self.foo_token_address, 1, sender_address=self.accounts[0])
         r = self.rpc.do(o)
-        self.assertEqual(c.parse_declaration_address_at(r), self.accounts[2])
+        self.assertEqual(c.parse_declaration_address_at(r), strip_0x(self.accounts[2]))
 
 
 if __name__ == '__main__':
