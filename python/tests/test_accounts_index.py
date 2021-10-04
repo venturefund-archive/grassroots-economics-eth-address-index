@@ -4,7 +4,6 @@ import logging
 import hashlib
 
 # external imports
-from tests.test_addressdeclarator_base import TestBase
 from eth_accounts_index import AccountsIndex
 from chainlib.eth.nonce import RPCNonceOracle
 from giftable_erc20_token import GiftableToken
@@ -14,7 +13,10 @@ from chainlib.eth.contract import ABIContractEncoder
 # local imports
 from eth_address_declarator.accounts_index import AccountsIndexAddressDeclarator
 from eth_address_declarator import Declarator
-       
+
+# test imports
+from tests.test_addressdeclarator_base import TestBase
+
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
 

@@ -2,11 +2,12 @@ pragma solidity >0.6.11;
 
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-contract TokenUniqueSymbolIndex {
+contract TokenUniqueSymbolIndexAddressDeclarator {
 
 	// EIP 173
 	address public owner;
 	address newOwner;
+	address public addressDeclaratorAddress;
 
 	mapping ( bytes32 => uint256 ) public registry;
 	address[] tokens;
@@ -14,8 +15,9 @@ contract TokenUniqueSymbolIndex {
 	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner); // EIP173
 	event AddressAdded(address indexed addedAccount, uint256 indexed accountIndex); // AccountsIndex
 
-	constructor() public {
+	constructor(address _addressDeclaratorAddress) public {
 		owner = msg.sender;
+		addressDeclaratorAddress = _addressDeclaratorAddress;
 		tokens.push(address(0));
 	}
 
@@ -34,22 +36,30 @@ contract TokenUniqueSymbolIndex {
 
 	function register(address _token) public returns (bool) {
 		require(msg.sender == owner);
+		
+		bool ok;
+		bytes memory r;
 
 		bytes memory token_symbol;
 		bytes32 token_symbol_key;
 		uint256 idx;
 
-		(bool _ok, bytes memory _r) = _token.call(abi.encodeWithSignature('symbol()'));
-		require(_ok);
+		(ok, r) = _token.call(abi.encodeWithSignature('symbol()'));
+		require(ok);
 
-		token_symbol = abi.decode(_r, (bytes));
+		token_symbol = abi.decode(r, (bytes));
 		token_symbol_key = sha256(token_symbol);
+
+		(ok, r) = addressDeclaratorAddress.call(abi.encodeWithSignature("addDeclaration(address,bytes32)", _token, token_symbol_key));
+		require(ok);
+		require(r[31] == 0x01);
 
 		idx = registry[token_symbol_key];
 		require(idx == 0);
 
 		registry[token_symbol_key] = tokens.length;
 		tokens.push(_token);
+
 		emit AddressAdded(_token, tokens.length - 1);
 		return true;
 	}

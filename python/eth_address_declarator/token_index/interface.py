@@ -28,7 +28,7 @@ from hexathon import (
 logg = logging.getLogger(__name__)
 
 moddir = os.path.dirname(__file__)
-datadir = os.path.join(moddir, 'data')
+datadir = os.path.join(moddir, '..', 'data')
 
 
 def to_identifier(s):
@@ -37,41 +37,7 @@ def to_identifier(s):
     return h.digest().hex()
 
 
-class TokenUniqueSymbolIndexAddressDeclarator(TxFactory):
-
-    __abi = None
-    __bytecode = None
-
-
-    @staticmethod
-    def abi():
-        if TokenUniqueSymbolIndexAddressDeclarator.__abi == None:
-            f = open(os.path.join(datadir, 'TokenUniqueSymbolIndexAddressDeclarator.json'), 'r')
-            TokenUniqueSymbolIndexAddressDeclarator.__abi = json.load(f)
-            f.close()
-        return TokenUniqueSymbolIndexAddressDeclarator.__abi
-
-
-    @staticmethod
-    def bytecode():
-        if TokenUniqueSymbolIndexAddressDeclarator.__bytecode == None:
-            f = open(os.path.join(datadir, 'TokenUniqueSymbolIndexAddressDeclarator.bin'))
-            TokenUniqueSymbolIndexAddressDeclarator.__bytecode = f.read()
-            f.close()
-        return TokenUniqueSymbolIndexAddressDeclarator.__bytecode
-
-
-    @staticmethod
-    def gas(code=None):
-        return 1200000
-
-
-    def constructor(self, sender_address):
-        code = TokenUniqueSymbolIndexAddressDeclarator.bytecode()
-        tx = self.template(sender_address, None, use_nonce=True)
-        tx = self.set_code(tx, code)
-        return self.build(tx)
-
+class TokenUniqueSymbolIndex(TxFactory):
 
     def register(self, contract_address, sender_address, address, tx_format=TxFormat.JSONRPC):
         enc = ABIContractEncoder()
