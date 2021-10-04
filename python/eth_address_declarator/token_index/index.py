@@ -64,7 +64,7 @@ class TokenUniqueSymbolIndexAddressDeclarator(TokenUniqueSymbolIndex):
 
     @staticmethod
     def gas(code=None):
-        return 1200000
+        return 2000000
 
 
     def constructor(self, sender_address, address_declarator_address):

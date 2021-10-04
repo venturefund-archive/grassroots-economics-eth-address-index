@@ -40,7 +40,7 @@ class AccountsIndexAddressDeclarator(AccountsIndex):
 
     @staticmethod
     def gas(code=None):
-        return 1200000
+        return 700000
 
 
     def constructor(self, sender_address, context_address, address_declarator_address):
