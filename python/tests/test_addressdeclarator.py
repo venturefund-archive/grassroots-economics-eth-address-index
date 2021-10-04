@@ -14,51 +14,31 @@ from chainlib.eth.contract import (
 from chainlib.eth.nonce import RPCNonceOracle
 from chainlib.eth.tx import receipt
 from giftable_erc20_token import GiftableToken
-from hexathon import add_0x
+from hexathon import (
+    add_0x,
+    strip_0x,
+    )
 
 # local imports
 from eth_address_declarator.declarator import AddressDeclarator
 from eth_address_declarator import Declarator
+from tests.test_addressdeclarator_base import TestBase
 
 logging.basicConfig(level=logging.DEBUG)
 logg = logging.getLogger()
-
-logging.getLogger('web3').setLevel(logging.WARNING)
-logging.getLogger('eth.vm').setLevel(logging.WARNING)
 
 testdir = os.path.dirname(__file__)
 
 description = '0x{:<064s}'.format(b'foo'.hex())
 
-class Test(EthTesterCase):
+
+class TestAddressDeclarator(TestBase):
 
     def setUp(self):
-        super(Test, self).setUp()
-        self.description = add_0x(os.urandom(32).hex())
+        super(TestAddressDeclarator, self).setUp()
         nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
-        #c = AddressDeclarator(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
-        c = AddressDeclarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
-        (tx_hash_hex, o) = c.constructor(self.accounts[0], self.description)
-        self.rpc.do(o)
 
-        o = receipt(tx_hash_hex)
-        r = self.rpc.do(o)
-        self.assertEqual(r['status'], 1)
-
-        self.address = r['contract_address']
-
-        #c = GiftableToken(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
-        c = GiftableToken(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
-        (tx_hash_hex, o) = c.constructor(self.accounts[0], 'FooToken', 'FOO', 6)
-        self.rpc.do(o)
-
-        o = receipt(tx_hash_hex)
-        r = self.rpc.do(o)
-        self.assertEqual(r['status'], 1)
-
-        self.foo_token_address = r['contract_address']
-
-        #c = GiftableToken(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
+       #c = GiftableToken(signer=self.signer, nonce_oracle=nonce_oracle, chain_id=self.chain_spec.chain_id())
         c = GiftableToken(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
         (tx_hash_hex, o) = c.constructor(self.accounts[0], 'BarToken', 'BAR', 6)
         self.rpc.do(o)
@@ -98,6 +78,23 @@ class Test(EthTesterCase):
         self.assertEqual(c.parse_declarator_count(r), 1)
 
 
+    def test_get_single_declaration(self):
+        d = add_0x(os.urandom(32).hex())
+
+        nonce_oracle = RPCNonceOracle(self.accounts[1], self.rpc)
+        c = Declarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+        (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[1], self.foo_token_address, d)
+        self.rpc.do(o)
+        o = receipt(tx_hash_hex)
+        r = self.rpc.do(o)
+        self.assertEqual(r['status'], 1)
+
+        o = c.declaration(self.address, self.accounts[1], self.foo_token_address, sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        proofs = c.parse_declaration(r)
+        self.assertEqual(proofs[0], strip_0x(d))
+
+
     def test_declaration(self):
 
         d = add_0x(os.urandom(32).hex())
@@ -124,11 +121,10 @@ class Test(EthTesterCase):
         o = c.declaration(self.address, self.accounts[1], self.foo_token_address, sender_address=self.accounts[0])
         r = self.rpc.do(o)
         proofs = c.parse_declaration(r)
-        self.assertEqual(proofs[0], d[2:])
-        self.assertEqual(proofs[1], d_two[2:])
+        self.assertEqual(proofs[0], strip_0x(d))
+        self.assertEqual(proofs[1], strip_0x(d_two))
 
 
-   
     def test_declarator_to_subject(self):
         d = add_0x(os.urandom(32).hex())
 
