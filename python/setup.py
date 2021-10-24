@@ -22,4 +22,7 @@ f.close()
 setup(
         install_requires=requirements,
         tests_require=test_requirements,
+        extras_require={
+            'dev': test_requirements,
+            },
         )
