@@ -117,12 +117,15 @@ class Declarator(TxFactory):
     @classmethod
     def parse_declaration(self, v):
         cursor = 0
-        v = strip_0x(v)
+        r = []
+        try:
+            v = strip_0x(v)
+        except ValueError:
+            return r
         position = int.from_bytes(bytes.fromhex(v[cursor:cursor+64]), 'big')
         cursor += (position * 2)
         length = int.from_bytes(bytes.fromhex(v[cursor:cursor+64]), 'big')
         cursor += 64
-        r = []
         for i in range(length):
             r.append(v[cursor:cursor+64])
             cursor += 64
