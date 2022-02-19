@@ -183,5 +183,56 @@ class TestAddressDeclarator(TestAddressDeclaratorBase):
         self.assertEqual(c.parse_declaration_address_at(r), strip_0x(self.accounts[2]))
 
 
+    def test_three_first(self):
+        d = []
+        for i in range(3):
+            d.append(add_0x(os.urandom(32).hex()))
+
+        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
+        c = Declarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+
+        for proof in d:
+            (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[0], self.foo_token_address, proof)
+            self.rpc.do(o)
+
+        o = c.declarator_count(self.address, self.foo_token_address, sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        self.assertEqual(c.parse_declarator_count(r), 1)
+
+        o = c.declaration(self.address, self.accounts[0], self.foo_token_address, sender_address=self.accounts[0])
+        r = self.rpc.do(o)
+        proofs = c.parse_declaration(r)
+        self.assertEqual(len(proofs), 3)
+
+        for i in range(3):
+            self.assertEqual(proofs[i], strip_0x(d[i]))
+
+
+    def test_three_first_different(self):
+        d = []
+        a = []
+        for i in range(3):
+            d.append(add_0x(os.urandom(32).hex()))
+            a.append(add_0x(os.urandom(20).hex()))
+
+        nonce_oracle = RPCNonceOracle(self.accounts[0], self.rpc)
+        c = Declarator(self.chain_spec, signer=self.signer, nonce_oracle=nonce_oracle)
+
+        for i in range(3):
+            (tx_hash_hex, o) = c.add_declaration(self.address, self.accounts[0], a[i], d[i])
+            self.rpc.do(o)
+
+        for i in range(3):
+            o = c.declarator_count(self.address, a[i], sender_address=self.accounts[0])
+            r = self.rpc.do(o)
+            self.assertEqual(c.parse_declarator_count(r), 1)
+
+            o = c.declaration(self.address, self.accounts[0], a[i], sender_address=self.accounts[0])
+            r = self.rpc.do(o)
+            proofs = c.parse_declaration(r)
+            self.assertEqual(len(proofs), 1)
+            self.assertEqual(proofs[0], strip_0x(d[i]))
+
+
 if __name__ == '__main__':
     unittest.main()

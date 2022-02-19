@@ -20,20 +20,21 @@ contract AddressDeclarator {
 		contents[contents.length-1].push(blockhash(block.number));
 
 		addDeclaration(msg.sender, _initialDescription);
+
 	}
 	
 	function toReference(address _declarator, address _subject) private pure returns ( bytes32 ) {
 		bytes32 k;
-		bytes memory signMaterial = new bytes(40);
+		bytes memory addrMaterial = new bytes(40);
 		bytes memory addrBytes = abi.encodePacked(_declarator);
 		for (uint256 i = 0; i < 20; i++) {
-			signMaterial[i] = addrBytes[i];
+			addrMaterial[i] = addrBytes[i];
 		}
 		addrBytes = abi.encodePacked(_subject);
 		for (uint256 i = 0; i < 20; i++) {
-			signMaterial[i+20] = addrBytes[i];
+			addrMaterial[i+20] = addrBytes[i];
 		}
-		k = sha256(signMaterial);
+		k = sha256(addrMaterial);
 		return k;
 	}
 
@@ -77,9 +78,9 @@ contract AddressDeclarator {
 			declarator[_subject].push(tx.origin);
 			contents.push(declarationContents);
 			declarationIndex[tx.origin].push(_subject);
+			idx = contents.length-1;
 		}
 
-		idx = contents.length-1;
 		declarationContentIndex[ks[0]] = idx;
 		contents[idx].push(_proof);
 

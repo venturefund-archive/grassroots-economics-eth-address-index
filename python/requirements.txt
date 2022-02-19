@@ -1,2 +1,2 @@
-confini~=0.5.1
-chainlib-eth~=0.0.10
+confini~=0.5.2
+chainlib-eth~=0.0.22
