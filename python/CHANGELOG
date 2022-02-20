@@ -1,4 +1,6 @@
-- 0.1.2-pending
+- 0.2.5
+	* Remove proof array idx overwrite when adding multiple proofs to subject
+- 0.1.2
 	* Move to chainlib-eth
 - 0.1.1-unreleased
 - 0.1.0-unreleased
