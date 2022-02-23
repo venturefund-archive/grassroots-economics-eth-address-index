@@ -54,5 +54,5 @@ slither-analyzer:
   allow_failure: true
   script: 
     - cd solidity
-    - slither  AddressDeclarator.sol
+    - slither  AddressDeclarator.sol --exclude-informational
     - slither  AddressDeclarator.sol --print human-summary
