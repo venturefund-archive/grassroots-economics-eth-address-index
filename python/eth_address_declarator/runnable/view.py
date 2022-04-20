@@ -32,14 +32,12 @@ logg = logging.getLogger()
 
 #argparser.add_argument('--resolve', action='store_true', help='Attempt to resolve the hashes to actual content')
 #argparser.add_argument('--resolve-http', dest='resolve_http', type=str, help='Base url to look up content hashes')
-arg_flags = chainlib.eth.cli.argflag_std_read | chainlib.eth.cli.Flag.EXEC
-argparser = chainlib.eth.cli.ArgumentParser(arg_flags)
-argparser.add_argument('--declarator-address', required=True, type=str, help='Declarator of address')
+arg_flags = chainlib.eth.cli.argflag_std_read | chainlib.eth.cli.Flag.EXEC | chainlib.eth.cli.Flag.WALLET
+argparser = chainlib.eth.cli.ArgumentParser(arg_flags, arg_long={'-a': '--declarator-address'})
 argparser.add_positional('address', type=str, help='Ethereum declaration address to look up')
 args = argparser.parse_args()
 
 extra_args = {
-    'declarator_address': None,
     'address': None,
         }
 config = chainlib.eth.cli.Config.from_args(args, arg_flags, extra_args=extra_args, default_fee_limit=AddressDeclarator.gas())
@@ -51,6 +49,8 @@ rpc = chainlib.eth.cli.Rpc()
 conn = rpc.connect_by_config(config)
 
 chain_spec = ChainSpec.from_chain_str(config.get('CHAIN_SPEC'))
+
+declarator_address = config.get('_WALLET_ADDRESS')
 
 
 def out_element(e, w=sys.stdout):
