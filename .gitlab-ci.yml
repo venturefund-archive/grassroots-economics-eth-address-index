@@ -47,7 +47,9 @@ run-coverage:
   coverage: '/^TOTAL.+?(\d+\%)$/'
   artifacts:
     reports:
-      cobertura: python/htmlcov/index.html
+      coverage_report:
+        coverage_format: cobertura
+        path:  python/htmlcov/index.html
 
 slither-analyzer:
   image: registry.gitlab.com/grassrootseconomics/cic-base-images/ci-solc-python:latest
