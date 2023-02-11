@@ -22,6 +22,19 @@ from hexathon import (
         add_0x,
         strip_0x,
         )
+from chainlib.eth.cli.arg import (
+        Arg,
+        ArgFlag,
+        process_args,
+        )
+from chainlib.eth.cli.config import (
+        Config,
+        process_config,
+        )
+from chainlib.eth.cli.log import process_log
+from chainlib.eth.settings import process_settings
+from chainlib.settings import ChainSettings
+
 
 # local imports
 from eth_address_declarator import Declarator
@@ -30,27 +43,38 @@ from eth_address_declarator.declarator import AddressDeclarator
 logging.basicConfig(level=logging.WARNING)
 logg = logging.getLogger()
 
-#argparser.add_argument('--resolve', action='store_true', help='Attempt to resolve the hashes to actual content')
-#argparser.add_argument('--resolve-http', dest='resolve_http', type=str, help='Base url to look up content hashes')
-arg_flags = chainlib.eth.cli.argflag_std_read | chainlib.eth.cli.Flag.EXEC | chainlib.eth.cli.Flag.WALLET
-argparser = chainlib.eth.cli.ArgumentParser(arg_flags, arg_long={'-a': '--declarator-address'})
-argparser.add_positional('address', type=str, help='Ethereum declaration address to look up')
+
+def process_config_local(config, arg, args, flags):
+    a = strip_0x(config.get('_POSARG'))
+    ac = to_checksum_address(a)
+    if config.true('_UNSAFE'):
+        a = ac
+    else:
+        if a != ac:
+            raise ValueError('declarator is not a valid checksum address')
+    config.add(a, '_DECLARATOR')
+    return config
+
+
+arg_flags = ArgFlag()
+arg = Arg(arg_flags)
+flags = arg_flags.STD_WRITE | arg_flags.WALLET | arg_flags.EXEC
+
+argparser = chainlib.eth.cli.ArgumentParser()
+argparser = process_args(argparser, arg, flags)
+argparser.add_argument('declarator', type=str, help='Ethereum declaration address to look up')
 args = argparser.parse_args()
 
-extra_args = {
-    'address': None,
-        }
-config = chainlib.eth.cli.Config.from_args(args, arg_flags, extra_args=extra_args, default_fee_limit=AddressDeclarator.gas())
+logg = process_log(args, logg)
 
-wallet = chainlib.eth.cli.Wallet()
-wallet.from_config(config)
+config = Config()
+config = process_config(config, arg, args, flags, positional_name='declarator')
+config = process_config_local(config, arg, args, flags)
+logg.debug('config loaded:\n{}'.format(config))
 
-rpc = chainlib.eth.cli.Rpc()
-conn = rpc.connect_by_config(config)
-
-chain_spec = ChainSpec.from_chain_str(config.get('CHAIN_SPEC'))
-
-declarator_address = config.get('_WALLET_ADDRESS')
+settings = ChainSettings()
+settings = process_settings(settings, config)
+logg.debug('settings loaded:\n{}'.format(settings))
 
 
 def out_element(e, w=sys.stdout):
@@ -68,40 +92,19 @@ def ls(ifc, conn, contract_address, declarator_address, subject_address, w=sys.s
 
 def main():
 
-    c = Declarator(chain_spec)
+    c = Declarator(
+            settings.get('CHAIN_SPEC')
+            )
 
-    contract_address = to_checksum_address(config.get('_EXEC_ADDRESS'))
-    if not config.true('_UNSAFE') and contract_address != add_0x(config.get('_EXEC_ADDRESS')):
-        raise ValueError('invalid checksum address for contract')
-
-
-    declarator_address = to_checksum_address(config.get('_DECLARATOR_ADDRESS'))
-    if not config.true('_UNSAFE') and declarator_address != add_0x(config.get('_DECLARATOR_ADDRESS')):
-        raise ValueError('invalid checksum address for declarator')
-
-    subject_address = to_checksum_address(config.get('_ADDRESS'))
-    if not config.true('_UNSAFE') and subject_address != add_0x(config.get('_ADDRESS')):
-        raise ValueError('invalid checksum address for subject')
-
-    ls(c, conn, contract_address, declarator_address, subject_address)
+    ls(
+            c,
+            settings.get('CONN'),
+            settings.get('EXEC'),
+            config.get('_DECLARATOR'),
+            settings.get('RECIPIENT'),
+            )
 
     declarations = []
-
-#    for d in declarations:
-#        if not args.resolve:
-#            print(d.hex())
-#            continue
-#        if args.resolve_http:
-#            try:
-#                r = try_sha256(d)
-#                print(r)
-#                continue
-#            except urllib.error.HTTPError:
-#                pass
-#        try:
-#            print(try_utf8(d))
-#        except UnicodeDecodeError:
-#            pass
 
 
 if __name__ == '__main__':
